@@ -186,12 +186,6 @@ end
 local function hide_panel(module)
 	if not module then return end
 
-	-- if utils.win_valid(module:get_state():get_window()) then
-	-- 	module:get_state():set_win_config(
-	-- 		vim.api.nvim_win_get_config(module:get_state():get_window())
-	-- 	)
-	-- end
-
 	utils.close_win(module:get_state():get_window())
 	module:get_state():set_window(-1)
 end
@@ -359,6 +353,38 @@ function M.show()
 	state.active = true
 end
 
+function M.module_buf_reload(module)
+	local listed = module:get_config().options.buffer.listed
+	local scratch = module:get_config().options.buffer.scratch
+	local buf = vim.api.nvim_create_buf(listed, scratch)
+	local win = module:get_state():get_window()
+	local buf_old = vim.api.nvim_win_get_buf(win)
+
+
+	vim.wo[win].winfixbuf = false
+	vim.api.nvim_win_set_buf(win, buf)
+	vim.wo[win].winfixbuf = false
+
+	module:get_state():set_buffer(buf)
+	if utils.buf_valid(buf_old) then
+		vim.api.nvim_buf_delete(buf_old, { force = true })
+	end
+
+	module:get_ui().render()
+
+	module:get_keymaps().setup()
+
+	local buf_opts = module:get_config().options.buffer.opts
+	for key, val in pairs(buf_opts) do
+		vim.api.nvim_set_option_value(key, val, { scope = 'local', buf = buf })
+	end
+
+	local win_opts = module:get_config().options.window.opts
+	for key, val in pairs(win_opts) do
+		vim.api.nvim_set_option_value(key, val, { scope = 'local', win = win })
+	end
+end
+
 local function panel_size_reset(direction)
 	local panel = get_panel_from_direction(direction)
 	if not panel.module() then return end
@@ -381,14 +407,11 @@ end
 
 function M.reset()
 	M.show()
-	-- parse_layout()
 
 	panel_size_reset(config.options.split_order.first)
 	panel_size_reset(config.options.split_order.second)
 	panel_size_reset(config.options.split_order.third)
 	panel_size_reset(config.options.split_order.fourth)
-
-	-- open_wins()
 end
 
 return M

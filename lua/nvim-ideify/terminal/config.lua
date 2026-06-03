@@ -4,6 +4,7 @@ M.defaults = {
 	window = {
 		start_opts = {},
 		opts = {
+			number = false,
 			winfixbuf = true,
 		},
 	},

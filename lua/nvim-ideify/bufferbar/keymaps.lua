@@ -27,6 +27,8 @@ function M.setup()
 	opts.expr = nil
 	vim.keymap.set('n', 'w', generate_buf_scroll('W'), opts)
 	vim.keymap.set('n', 'b', generate_buf_scroll('Wb'), opts)
+
+	opts.remap = true
 	vim.keymap.set('n', '<S-ScrollWheelUp>', 'w', opts)
 	vim.keymap.set('n', '<S-ScrollWheelDown>', 'b', opts)
 end

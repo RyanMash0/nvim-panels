@@ -43,38 +43,80 @@ vim.api.nvim_create_autocmd('WinEnter', {
 	end,
 })
 
--- vim.api.nvim_create_autocmd('WinClosed', {
--- 	group = 'IDEify',
--- 	callback = function()
--- 		local state = require('nvim-ideify.state')
--- 		local utils = require('nvim-ideify.utils')
---
--- 		local win = vim.api.nvim_get_current_win()
---
--- 		if state.opened and state.active and utils.is_plugin_win(win) then
--- 			ui.show()
--- 		end
--- 	end,
--- })
+vim.api.nvim_create_autocmd('TextChanged', {
+	group = 'IDEify',
+	callback = function()
+		local utils = require('nvim-ideify.utils')
+		local win = vim.api.nvim_get_current_win()
+		local modules = utils.get_modules()
+		local mod_win
+		local buf
+		for _, module in pairs(modules) do
+			mod_win = module:get_state():get_window()
+			mod_win = mod_win > -1 and mod_win or 0
+			buf = vim.api.nvim_win_get_buf(mod_win)
+			if win == mod_win and vim.bo[buf].filetype == 'netrw' then
+				ui.module_buf_reload(module)
+			end
+		end
+	end
+})
 
--- vim.api.nvim_create_autocmd('WinNewPre', {
--- 	group = 'IDEify',
--- 	callback = function()
--- 		local state = require('nvim-ideify.state')
--- 		if state.opened and state.active then
--- 		end
--- 	end,
--- })
-
--- vim.api.nvim_create_autocmd('WinNew', {
--- 	group = 'IDEify',
--- 	callback = function()
--- 		local state = require('nvim-ideify.state')
--- 		if state.opened and state.active then
--- 			ui.hide()
--- 			ui.show()
--- 		end
+-- local events = vim.fn.getcompletion('', 'event')
+-- local forbidden_events = {
+-- 	["BufReadCmd"] = true,
+-- 	["BufWriteCmd"] = true,
+-- 	["CmdlineChanged"] = true,
+-- 	["CmdlineEnter"] = true,
+-- 	["ColorScheme"] = true,
+-- 	["ColorSchemePre"] = true,
+-- 	["CursorMoved"] = true,
+-- 	["CursorMovedI"] = true,
+-- 	["CursorMovedC"] = true,
+-- 	["CursorHold"] = true,
+-- 	["CursorHoldI"] = true,
+-- 	["DiagnosticChanged"] = true,
+-- 	["ExitPre"] = true,
+-- 	["FileReadCmd"] = true,
+-- 	["FileWriteCmd"] = true,
+-- 	["FocusGained"] = true,
+-- 	["FocusLost"] = true,
+-- 	["LspNotify"] = true,
+-- 	["LspProgress"] = true,
+-- 	["LspRequest"] = true,
+-- 	["LspTokenUpdate"] = true,
+-- 	["OptionSet"] = true,
+-- 	["SafeState"] = true,
+-- 	["SourceCmd"] = true,
+-- 	["SourcePre"] = true,
+-- 	["SourcePost"] = true,
+-- 	["UIEnter"] = true,
+-- 	["VimEnter"] = true,
+-- 	["VimResized"] = true,
+-- 	["VimResume"] = true,
+-- 	["VimSuspend"] = true,
+-- 	["VimLeave"] = true,
+-- 	["VimLeavePre"] = true,
+-- 	["WinScrolled"] = true,
+-- }
+--
+-- for i, event in ipairs(events) do
+-- 	if forbidden_events[event] then
+-- 		events[i] = nil
 -- 	end
+-- end
+--
+-- local new_events = {}
+-- for _, event in pairs(events) do
+-- 	table.insert(new_events, event)
+-- end
+--
+-- vim.api.nvim_create_autocmd(new_events, {
+-- 	group = 'IDEify',
+-- 	callback = function(args)
+--     -- Print the exact event and the time it fired
+--     local time = os.date("%H:%M:%S")
+--     print(string.format("[%s] Event fired: %s (Buf: %d)", time, args.event, args.buf))
+--   end,
 -- })
-
 return M

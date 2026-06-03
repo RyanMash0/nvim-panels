@@ -1,7 +1,6 @@
 -------------------------------------------------------------------------------
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
-? Disable netrw in special buffers with abbreviations
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
@@ -9,9 +8,11 @@
 ? Add git status highlighting to file tree/buffer bar
 ? Add cache-preserve refresh to file tree (slow)
 ? Add rename file in buffer bar
+? Make a floating window for a minimize button (do this in main ui)
+? Add minimized status for modules in state
+? Add QuickFix autocommand
+- Add statusline updating for buffer bar
 - Add disabled config for each panel
-- Add minimized status for modules in state
-- Make a floating window for a minimize button (do this in main ui)
 - Add option to make buffer bar one line (style = detailed ?)
 - Add terminal buffers
 - Add modified status in buffer bar
@@ -23,6 +24,9 @@
 - Add type annotations
 - Add documentation
 - Add health
+- Focus should never change to what was just created (adding in file tree)
+- Don't leave file tree when deleting (down to next list item)
+- Should not kick off of file or folder when renaming or open
 
 -------------------------------------------------------------------------------
 -- Refactor                                                                  --
