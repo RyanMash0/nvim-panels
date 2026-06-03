@@ -45,29 +45,25 @@ local function check_or_make_main_buf()
 	local t_buf_exists = M.buf_valid(t_buf_id)
 	local b_buf_exists = M.buf_valid(b_buf_id)
 
-	local exclude_bufs = {
-		[l_buf_id] = l_buf_exists,
-		[r_buf_id] = r_buf_exists,
-		[t_buf_id] = t_buf_exists,
-		[b_buf_id] = b_buf_exists,
-	}
-
-	local check
-	for _, buf in ipairs(bufs) do
-		check = true
-		for key, val in pairs(exclude_bufs) do
-			if buf == key and val then
-				check = false
-				break
-			end
-		end
-		if check then
-			return buf
-		end
+	local check_bufs = {}
+	for i, buf in ipairs(bufs) do
+		check_bufs[buf] = i
 	end
-	if not check then
+
+	if l_buf_exists then check_bufs[l_buf_id] = nil end
+	if r_buf_exists then check_bufs[r_buf_id] = nil end
+	if t_buf_exists then check_bufs[t_buf_id] = nil end
+	if b_buf_exists then check_bufs[b_buf_id] = nil end
+
+	for i = 2, 5 do
+		check_bufs[i] = nil
+	end
+
+	if next(check_bufs) == nil then
 		return vim.api.nvim_create_buf(true, false)
 	end
+
+	return next(check_bufs)
 end
 
 function M.win_valid(id)
@@ -141,33 +137,46 @@ function M.check_or_make_main_win()
 	local t_win_exists = M.win_valid(t_win_id)
 	local b_win_exists = M.win_valid(b_win_id)
 
-	local exclude_wins = {
-		[l_win_id] = l_win_exists,
-		[r_win_id] = r_win_exists,
-		[t_win_id] = t_win_exists,
-		[b_win_id] = b_win_exists,
-	}
+	local check_wins = {}
+	for i, win in ipairs(wins) do
+		check_wins[win] = i
+	end
 
-	local check
-	for _, win in ipairs(wins) do
-		check = true
-		for key, val in pairs(exclude_wins) do
-			if win == key and val then
-				check = false
-				break
-			end
-		end
-		if check then
-			state.wins.main = win
-			break
+	local win_config
+
+	if l_win_exists then check_wins[l_win_id] = nil end
+	if r_win_exists then check_wins[r_win_id] = nil end
+	if t_win_exists then check_wins[t_win_id] = nil end
+	if b_win_exists then check_wins[b_win_id] = nil end
+
+	for win, _ in pairs(check_wins) do
+		win_config = vim.api.nvim_win_get_config(win)
+		if not win_config.focusable or win_config.relative ~= '' then
+			check_wins[win] = nil
 		end
 	end
-	if not check then
+
+	if next(check_wins) == nil then
+		local exclude_wins = {
+			[l_win_id] = l_win_exists,
+			[r_win_id] = r_win_exists,
+			[t_win_id] = t_win_exists,
+			[b_win_id] = b_win_exists,
+		}
 		local buf_id = check_or_make_main_buf()
 		local win_opts = get_split_opts(exclude_wins)
 		state.wins.main = vim.api.nvim_open_win(buf_id, true, win_opts)
 		require('nvim-ideify.ui').open()
+		return
 	end
+
+	local min, _ = next(check_wins)
+	for win, i in pairs(check_wins) do
+		if i < check_wins[min] then
+			min = win
+		end
+	end
+	state.wins.main = min
 end
 
 function M.delete_buf(id)

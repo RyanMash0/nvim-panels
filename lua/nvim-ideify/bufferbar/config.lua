@@ -8,7 +8,8 @@ M.defaults = {
 		},
 		opts = {
 			wrap = false,
-			winfixbuf = true
+			winfixbuf = true,
+			statusline = ' ',
 		},
 	},
 	buffer = {

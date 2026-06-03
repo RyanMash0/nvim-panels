@@ -10,67 +10,86 @@ local right = modules.right
 local top = modules.top
 local bottom = modules.bottom
 
-M.win_structure = {}
+M.windows = {}
 M.height_ratio = 1
 M.width_ratio = 1
 
-local function parse_structure(node, depth, idx)
-	local new_depth
-	local new_node
+local function leftmost_leaf(tree)
+	local leaf = tree
+	while leaf[1] ~= 'leaf' do
+		leaf = leaf[2][1]
+	end
+	return leaf
+end
+
+local function add_windows(forest, parents, depth)
+	local new_forest = {}
+	local new_parents = {}
+	local tree
+	local subtree
+	local leaf
 	local win_config
 	local win_buf
 
-	for i = 1, #node[2] do
-		new_depth = depth + 1
-		new_node = node[2][i]
-		if new_node[1] ~= 'leaf' then
-			if not M.win_structure[new_depth] then
-				M.win_structure[new_depth] = {}
+	for i = 1, #forest do
+		tree = forest[i]
+		subtree = tree[2][1]
+		leaf = parents[i][3]
+		if subtree ~= leaf then
+			table.insert(new_forest, subtree)
+			table.insert(new_parents, parents[i])
+		end
+
+		for j = 2, #tree[2] do
+			subtree = tree[2][j]
+			leaf = leftmost_leaf(subtree)
+			win_config = vim.api.nvim_win_get_config(leaf[2])
+
+			if tree[1] == 'row' then
+				win_config.split = 'right'
+			else
+				win_config.split = 'below'
 			end
 
-			table.insert(M.win_structure[new_depth], {
-				split_type = new_node[1],
-				where_split = { idx, i },
-				wins = {}
-			})
+			if win_config.height then
+				win_config.height = math.floor(win_config.height * M.height_ratio)
+			end
+			if win_config.width then
+				win_config.width = math.floor(win_config.width * M.width_ratio)
+			end
 
-			parse_structure(new_node, new_depth, #M.win_structure[new_depth])
+			win_buf = vim.api.nvim_win_get_buf(leaf[2])
+
+			if win_config.focusable then
+				table.insert(M.windows[depth], {
+					parent = parents[i],
+					config = win_config,
+					buffer = win_buf,
+					id = -1,
+				})
+
+				if subtree ~= leaf then
+					table.insert(new_forest, subtree)
+					table.insert(new_parents, { depth, j, leaf })
+				end
+			end
 		end
-
-		while new_node[1] ~= 'leaf' do
-			new_node = new_node[2][1]
-			new_depth = new_depth + 1
-		end
-
-		win_config = vim.api.nvim_win_get_config(new_node[2])
-		if M.win_structure[depth][idx].split_type == "row" then
-			win_config.split = 'right'
-		else
-			win_config.split = 'below'
-		end
-
-		if win_config.height then
-			win_config.height = math.floor(win_config.height * M.height_ratio)
-		end
-		if win_config.width then
-			win_config.width = math.floor(win_config.width * M.width_ratio)
-		end
-
-		win_buf = vim.api.nvim_win_get_buf(new_node[2])
-
-		M.win_structure[depth][idx].wins[i] = {
-			id = new_node[2],
-			config = win_config,
-			buffer = win_buf,
-		}
 	end
+
+	if #new_forest > 0 then
+		M.windows[depth + 1] = {}
+		add_windows(new_forest, new_parents, depth + 1)
+	end
+
 end
 
 local function parse_layout()
-	local win_layout = vim.fn.winlayout()
-	local wins = vim.api.nvim_tabpage_list_wins(0)
-	M.win_structure = {}
-	if #wins == 1 then return end
+	local win_tree = vim.fn.winlayout()
+	local root_leaf = leftmost_leaf(win_tree)
+	state.wins.main = root_leaf[2]
+	M.windows = {}
+
+	if win_tree == root_leaf then return end
 	local l_width = config.options.layout.left.width
 	local r_width = config.options.layout.right.width
 	local t_height = config.options.layout.top.height
@@ -82,47 +101,70 @@ local function parse_layout()
 	M.height_ratio = (vim.o.lines - height_reduction) / vim.o.lines
 
 	local initial_entry = {
-		split_type = win_layout[1],
-		where_split = nil,
-		wins = {},
+		parent = nil,
+		config = nil,
+		buffer = nil,
+		id = state.wins.main,
 	}
-	M.win_structure = { { initial_entry } }
-	parse_structure(win_layout, 1, 1)
-	state.wins.main = M.win_structure[1][1].wins[1].id
+	M.windows = { { initial_entry } }
+	add_windows({ win_tree }, { { 1, 1, root_leaf } }, 1)
+end
+
+local function close_wins()
+	local wins = vim.api.nvim_tabpage_list_wins(0)
+	local win_config
+
+	vim.api.nvim_set_current_win(state.wins.main)
 
 	for _, win in ipairs(wins) do
-		if win ~= state.wins.main then
+		win_config = vim.api.nvim_win_get_config(win)
+		if win ~= state.wins.main and win_config.focusable then
 			vim.api.nvim_win_hide(win)
 		end
 	end
 end
 
+local function get_parent(win)
+	return M.windows[win.parent[1]][win.parent[2]]
+end
+
 local function open_wins()
-	vim.api.nvim_set_current_win(state.wins.main)
 	local win
-	local prev_win
-	local split
 	local win_id
-
-	for i = 1, #M.win_structure do
-		for j = 1, #M.win_structure[i] do
-			split = M.win_structure[i][j].where_split
-
-			if split then
-				win_id = M.win_structure[i - 1][split[1]].wins[split[2]].id
-				M.win_structure[i][j].wins[1].id = win_id
-				vim.api.nvim_set_current_win(win_id)
-			end
-
-			for k = 2, #M.win_structure[i][j].wins do
-				win = M.win_structure[i][j].wins[k]
-				prev_win = M.win_structure[i][j].wins[k - 1]
-				win.id = vim.api.nvim_open_win(win.buffer, true, win.config)
-				vim.api.nvim_win_set_config(prev_win.id, prev_win.config)
-			end
-		end
-	end
+	local parent
+	local prev_win
+	local prev_parent
+	utils.check_or_make_main_win()
 	vim.api.nvim_set_current_win(state.wins.main)
+	if #M.windows == 0 then return end
+
+	for j = 2, #M.windows[1] do
+		win = M.windows[1][j]
+		win_id = vim.api.nvim_open_win(win.buffer, true, win.config)
+		win.id = win_id
+	end
+
+	for i = 2, #M.windows do
+		win = M.windows[i][1]
+		parent = get_parent(win)
+		vim.api.nvim_set_current_win(parent.id)
+		win_id = vim.api.nvim_open_win(win.buffer, true, win.config)
+		win.id = win_id
+		for j = 2, #M.windows[i] do
+			prev_win = M.windows[i][j - 1]
+			prev_parent = get_parent(prev_win)
+			win = M.windows[i][j]
+			parent = get_parent(win)
+			if parent.id ~= prev_parent.id then
+				vim.api.nvim_set_current_win(parent.id)
+			end
+
+			win_id = vim.api.nvim_open_win(win.buffer, true, win.config)
+			win.id = win_id
+			vim.api.nvim_win_set_config(prev_win.id, prev_win.config)
+		end
+		vim.api.nvim_set_current_win(state.wins.main)
+	end
 end
 
 local function get_panel_from_direction(direction)
@@ -144,11 +186,11 @@ end
 local function hide_panel(module)
 	if not module then return end
 
-	if utils.win_valid(module:get_state():get_window()) then
-		module:get_state():set_win_config(
-			vim.api.nvim_win_get_config(module:get_state():get_window())
-		)
-	end
+	-- if utils.win_valid(module:get_state():get_window()) then
+	-- 	module:get_state():set_win_config(
+	-- 		vim.api.nvim_win_get_config(module:get_state():get_window())
+	-- 	)
+	-- end
 
 	utils.close_win(module:get_state():get_window())
 	module:get_state():set_window(-1)
@@ -229,6 +271,7 @@ function M.open()
 		vim.opt.equalalways = false
 	end
 	parse_layout()
+	close_wins()
 
 	open_panel(config.options.split_order.first)
 	open_panel(config.options.split_order.second)
@@ -285,6 +328,7 @@ function M.show()
 		vim.opt.equalalways = false
 	end
 	parse_layout()
+	close_wins()
 
 	unhide_panel(config.options.split_order.first)
 	unhide_panel(config.options.split_order.second)
@@ -337,14 +381,14 @@ end
 
 function M.reset()
 	M.show()
-	parse_layout()
+	-- parse_layout()
 
 	panel_size_reset(config.options.split_order.first)
 	panel_size_reset(config.options.split_order.second)
 	panel_size_reset(config.options.split_order.third)
 	panel_size_reset(config.options.split_order.fourth)
 
-	open_wins()
+	-- open_wins()
 end
 
 return M

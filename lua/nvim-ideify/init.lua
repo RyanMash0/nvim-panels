@@ -26,7 +26,6 @@ M.refresh_bufferbar = bufferbar:get_ui().render
 function M.setup(opts)
 	config.setup(opts)
 	require('nvim-ideify.state').wins.main = vim.api.nvim_get_current_win()
-
 end
 
 vim.api.nvim_create_augroup('IDEify', { clear = true })
@@ -41,21 +40,41 @@ vim.api.nvim_create_autocmd('WinEnter', {
 		if not utils.is_plugin_win(win) then
 			state.wins.last = win
 		end
-	end
+	end,
 })
 
-vim.api.nvim_create_autocmd('WinClosed', {
-	group = 'IDEify',
-	callback = function()
-		local utils = require('nvim-ideify.utils')
-		local state = require('nvim-ideify.state')
+-- vim.api.nvim_create_autocmd('WinClosed', {
+-- 	group = 'IDEify',
+-- 	callback = function()
+-- 		local state = require('nvim-ideify.state')
+-- 		local utils = require('nvim-ideify.utils')
+--
+-- 		local win = vim.api.nvim_get_current_win()
+--
+-- 		if state.opened and state.active and utils.is_plugin_win(win) then
+-- 			ui.show()
+-- 		end
+-- 	end,
+-- })
 
-		local win = vim.api.nvim_get_current_win()
+-- vim.api.nvim_create_autocmd('WinNewPre', {
+-- 	group = 'IDEify',
+-- 	callback = function()
+-- 		local state = require('nvim-ideify.state')
+-- 		if state.opened and state.active then
+-- 		end
+-- 	end,
+-- })
 
-		if state.opened and state.active and utils.is_plugin_win(win) then
-			ui.show()
-		end
-	end
-})
+-- vim.api.nvim_create_autocmd('WinNew', {
+-- 	group = 'IDEify',
+-- 	callback = function()
+-- 		local state = require('nvim-ideify.state')
+-- 		if state.opened and state.active then
+-- 			ui.hide()
+-- 			ui.show()
+-- 		end
+-- 	end
+-- })
 
 return M
