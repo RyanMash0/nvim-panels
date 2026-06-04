@@ -15,6 +15,7 @@ X Add minimized status for modules in state
 - Add disabled config for each panel
 - Add terminal buffers
 - Add file tree buffers
+- Expose and encapsulate target and/or other state or utils variables
 - Add modified status in buffer bar
 - Add multiple file tree views with highlighted numbers at the top
 - Add text highlighting to status line for multiple terminal tabs

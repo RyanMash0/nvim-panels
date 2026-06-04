@@ -1,8 +1,8 @@
 local M = {}
-local config = require('nvim-ideify.filetree.config')
 local state = require('nvim-ideify.filetree.state')
+local utils = require('nvim-ideify.filetree.utils')
 local g_state = require('nvim-ideify.state')
-local utils = require('nvim-ideify.utils')
+local g_utils = require('nvim-ideify.utils')
 
 local function generate_tree_action(line, func)
 	local buf_id = state:get_buffer()
@@ -94,21 +94,20 @@ local function close(line)
 	name = name:gsub('v', '>', 1)
 	vim.api.nvim_buf_set_lines(buf_id, line - 1, line, true, {name})
 
-	local sub_items = 0
 	local path
-	while #tree > line and tree[line + 1].depth > parent.depth do
-		path = tree[line + 1].path
-		sub_items = sub_items + 1
-		state.fs_marked[path] = nil
+	local i = 1
+	while tree[line + i].depth > parent.depth do
+		path = tree[line + i].path
+		state.fs_sources[path] = nil
 		state.fs_target[path] = nil
-		table.remove(tree, line + 1)
+		i = i + 1
 	end
 
-	vim.api.nvim_buf_set_lines(buf_id, line, line + sub_items, true, {})
+	M.render()
 end
 
 function M.change_dir(path)
-	utils.check_or_make_main_win()
+	g_utils.check_or_make_main_win()
 	vim.schedule(function ()
 		for _, win in ipairs(vim.api.nvim_list_wins()) do
 			vim.api.nvim_win_call(win, function () vim.cmd('silent lcd' .. path) end)
@@ -123,7 +122,7 @@ function M.ascend()
 	vim.schedule(function ()
 		local new_path = vim.fs.abspath('.'):gsub('/[^/]+$', '')
 		if new_path == '' then new_path = '/' end
-		state.fs_marked = {}
+		state.fs_sources = {}
 		state.fs_target = {}
 		M.change_dir(new_path)
 	end)
@@ -133,7 +132,7 @@ function M.descend()
 	local line = vim.fn.line('.')
 	if state.tree[line].type ~= 'directory' then return end
 	local path = state.tree[line].path
-	state.fs_marked = {}
+	state.fs_sources = {}
 	state.fs_target = {}
 	M.change_dir(path)
 end
@@ -156,9 +155,9 @@ function M.action()
 	local tree = state.tree
 	local parent = tree[line]
 	if parent.type == 'file' then
-		utils.check_or_make_main_win()
+		g_utils.check_or_make_main_win()
 		local last_win =
-			utils.win_valid(g_state.wins.last) and g_state.wins.last
+			g_utils.win_valid(g_state.wins.last) and g_state.wins.last
 		local win = last_win or g_state.wins.main
 		vim.api.nvim_set_current_win(win)
 		vim.cmd('edit ' .. parent.path)
@@ -185,6 +184,9 @@ function M.highlight()
 	local bar_hl = vim.api.nvim_get_hl_id_by_name('Special')
 	local plain_hl = vim.api.nvim_get_hl_id_by_name('netrwPlain')
 	local header_hl = vim.api.nvim_get_hl_id_by_name('netrwComment')
+	local target_hl = vim.api.nvim_get_hl_id_by_name('IDEifyTreeTarget')
+	local source_hl = vim.api.nvim_get_hl_id_by_name('IDEifyTreeSource')
+
 	local name_start
 	local line_len
 	local hl_group
@@ -201,8 +203,32 @@ function M.highlight()
 			hl_group = plain_hl
 		end
 
+		if state.fs_target[entry.path] then
+			hl_group = target_hl
+		end
+
+		if state.fs_sources[entry.path] then
+			hl_group = source_hl
+		end
+
 		vim.api.nvim_buf_set_extmark(buf_id, ns_id, i - 1, name_start, {end_col = line_len, hl_group = hl_group})
 	end
+end
+
+local function get_cur_line()
+	local win_id = state:get_window()
+	local pos = vim.api.nvim_win_get_cursor(win_id)
+	pos[1] = pos[1] - (state:get_header_height() or 0)
+	return math.max(pos[1], 1)
+end
+
+local function set_cur_line(line)
+	local buf_id = state:get_buffer()
+	local win_id = state:get_window()
+	local max_row = vim.api.nvim_buf_line_count(buf_id)
+	line = line + (state:get_header_height() or 0)
+	line = line <= max_row and line or max_row
+	vim.api.nvim_win_set_cursor(win_id, { line, 0 })
 end
 
 function M.render()
@@ -219,36 +245,12 @@ function M.render()
 		path = path,
 		type = 'directory',
 	}
+	local cur_line = get_cur_line()
 
-	-- Make border only span width of window? At least make file path wrap
-	local border = '=========================================='
-	local title_line = ' File Tree'
-	local home_dir = tostring(os.getenv('HOME') or os.getenv('USERPROFILE'))
-	local path_line = path:gsub(home_dir, '~')
-	if path_line ~= '/' then path_line = path_line .. '/' end
-	path_line = ' Path: ' .. path_line
+	local header = utils.get_full_header()
 
-	local keymaps = {
-		' ┌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐',
-		' ╎ Keymaps:              ╎',
-		' ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤',
-		' ╎ [M]ove, [R]ename,     ╎',
-		' ╎ [C]opy, [D]elete,     ╎',
-		' ╎ [m]ark [t]arget (mt), ╎',
-		' ╎ [m]ark [s]ource (ms)  ╎',
-		' └╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┘',
-	}
-
-	local user_header = config.options.header
-	local header_lines = user_header or {border, title_line, path_line, border}
-	if config.options.show_keymaps then
-		for _, line in pairs(keymaps) do
-			table.insert(header_lines, line)
-		end
-	end
-	state:set_header_height(#header_lines)
 	local header_height = state:get_header_height()
-	table.insert(header_lines, '../')
+	table.insert(header, '../')
 
 	local starting_array = {}
 	for _ = 1, header_height do
@@ -260,11 +262,12 @@ function M.render()
 
 	vim.bo[buf_id].modifiable = true
 	vim.api.nvim_buf_set_lines(buf_id, 0, -1, false, {})
-	vim.api.nvim_buf_set_lines(buf_id, 0, 1, true, header_lines)
+	vim.api.nvim_buf_set_lines(buf_id, 0, 1, true, header)
 	vim.api.nvim_win_set_cursor(win_id, {header_height + 1, 0})
 	print_paths(header_height + 1)
 	vim.bo[buf_id].modifiable = false
 	M.highlight()
+	set_cur_line(cur_line)
 end
 
 return M
