@@ -6,6 +6,7 @@ M.defaults = {
 		opts = {
 			number = false,
 			winfixbuf = true,
+			statusline = '[Terminal]',
 		},
 	},
 	buffer = {

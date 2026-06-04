@@ -2,6 +2,7 @@ local M = {}
 
 M.defaults = {
 	cache = true,
+	show_keymaps = true,
 	header = nil,
 	window = {
 		start_opts = {},
@@ -9,6 +10,7 @@ M.defaults = {
 			wrap = false,
 			number = false,
 			winfixbuf = true,
+			statusline = '[Files]',
 		},
 	},
 	buffer = {

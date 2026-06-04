@@ -9,7 +9,7 @@ M.defaults = {
 		opts = {
 			wrap = false,
 			winfixbuf = true,
-			statusline = ' ',
+			statusline = '[Buffers]',
 		},
 	},
 	buffer = {

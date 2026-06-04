@@ -5,28 +5,27 @@
 -------------------------------------------------------------------------------
 -- Features                                                                  --
 -------------------------------------------------------------------------------
-? Add git status highlighting to file tree/buffer bar
-? Add cache-preserve refresh to file tree (slow)
+X Add statusline updating for buffer bar
+X Add git status highlighting to file tree/buffer bar
+X Make a floating window for a minimize button (do this in main ui)
+X Add minimized status for modules in state
 ? Add rename file in buffer bar
-? Make a floating window for a minimize button (do this in main ui)
-? Add minimized status for modules in state
 ? Add QuickFix autocommand
-- Add statusline updating for buffer bar
+? Add option to make buffer bar one line (style = detailed ?)
 - Add disabled config for each panel
-- Add option to make buffer bar one line (style = detailed ?)
 - Add terminal buffers
+- Add file tree buffers
 - Add modified status in buffer bar
+- Add multiple file tree views with highlighted numbers at the top
+- Add text highlighting to status line for multiple terminal tabs
+- Add moving panels during session
 - Allow moving tabs
-- Add rename in file tree
-- Add delete in file tree
 - Add move in file tree
+- Add copy in file tree
 - Add add in file tree
 - Add type annotations
 - Add documentation
 - Add health
-- Focus should never change to what was just created (adding in file tree)
-- Don't leave file tree when deleting (down to next list item)
-- Should not kick off of file or folder when renaming or open
 
 -------------------------------------------------------------------------------
 -- Refactor                                                                  --

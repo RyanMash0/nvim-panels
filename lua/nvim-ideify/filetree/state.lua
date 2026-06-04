@@ -7,6 +7,9 @@ M.win_config = {}
 M.namespace = vim.api.nvim_create_namespace('IDEifyFileTree')
 M.header_height = 0
 M.tree = {}
+M.expanded = {}
+M.fs_target = {}
+M.fs_marked = {}
 M.on_click = nil
 
 function M:set_buffer(buf_id)
@@ -43,14 +46,6 @@ end
 
 function M:get_header_height()
 	return self.header_height
-end
-
-function M:set_tree(tree)
-	self.tree = tree
-end
-
-function M:get_tree()
-	return self.tree
 end
 
 function M:set_on_click(on_click)

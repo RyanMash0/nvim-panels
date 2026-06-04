@@ -4,25 +4,16 @@ local state = require('nvim-ideify.filetree.state')
 local g_state = require('nvim-ideify.state')
 local utils = require('nvim-ideify.utils')
 
-local function generate_tree_action(buf_id, tree, line, func)
+local function generate_tree_action(line, func)
+	local buf_id = state:get_buffer()
 	vim.bo[buf_id].modifiable = true
-	state:set_tree(func(buf_id, tree, line))
+	func(line)
 	vim.bo[buf_id].modifiable = false
 end
 
-local function get_cached(buf_id, tree, line)
-	local parent = tree[line]
-	for i = 1, #parent.cached_entries do
-		table.insert(tree, line + i, parent.cached_entries[i])
-	end
-	vim.api.nvim_buf_set_lines(buf_id, line, line, true, parent.cached_lines)
-	parent.cached = false
-	parent.cached_lines = {}
-	parent.cached_entries = {}
-	return tree
-end
-
-local function print_paths(buf_id, tree, start_line)
+local function print_paths(start_line)
+	local tree = state.tree
+	local buf_id = state:get_buffer()
 	local parent = tree[start_line]
 	local depth = parent.depth + 1
 	local path = parent.path
@@ -34,85 +25,93 @@ local function print_paths(buf_id, tree, start_line)
 
 	local indicator
 	if depth < 0 then
-		indicator = {directory = '', other = ''}
+		indicator = {dir_closed = '', dir_open = '', other = ''}
 	else
-		indicator = {directory = '> ', other = '+ '}
+		indicator = {dir_closed = '> ', dir_open = 'v ', other = '+ '}
 	end
 
-	local directories = 0
+	local dirs = 0
 	local other = 0
+	local entries = 0
+	local extra = 0
+	local dir_type
 	local line
+	local expanded
 	local entry
+	local entry_path
 	for name, type in dir_iterator do
+		entries = entries + 1
+		entry_path = path .. '/' .. name
 		entry = {
 			depth = depth,
-			path = path .. '/' .. name,
+			path = entry_path,
 			type = type,
-			expanded = false,
-			cached = false,
-			cached_lines = {},
-			cached_entries = {},
 		}
+		expanded = state.expanded[entry_path]
 
 		if type == 'directory' then
-			line = start_line + directories
-			directories = directories + 1
-			name = indicator.directory .. name .. '/'
+			line = start_line + dirs + extra
+			dirs = dirs + 1
+			if expanded then dir_type = indicator.dir_open
+			else dir_type = indicator.dir_closed end
+			name = dir_type .. name .. '/'
 		else
-			line = start_line + directories + other
+			line = start_line + dirs + other + extra
 			other = other + 1
 			name = indicator.other .. name
 		end
 
 		table.insert(tree, line + 1, entry)
 		vim.api.nvim_buf_set_lines(buf_id, line, line, true, {prefix..name})
+
+		if state.expanded[entry_path] then
+			extra = extra + print_paths(line + 1)
+		end
 	end
 
-	return tree
+	return entries + extra
 end
 
-local function expand(buf_id, tree, line)
-	local parent = tree[line]
-	parent.expanded = true
+local function expand(line)
+	local buf_id = state:get_buffer()
+	local parent = state.tree[line]
+	local expanded = state.expanded
+	expanded[parent.path] = true
 	local name = vim.api.nvim_buf_get_lines(buf_id, line - 1, line, true)[1]
 	name = name:gsub('>', 'v', 1)
 	vim.api.nvim_buf_set_lines(buf_id, line - 1, line, true, {name})
-	if parent.cached and config.options.cache then
-		return get_cached(buf_id, tree, line)
-	else
-		return print_paths(buf_id, tree, line)
-	end
+	print_paths(line)
 end
 
-local function close(buf_id, tree, line)
+local function close(line)
+	local buf_id = state:get_buffer()
+	local tree = state.tree
 	local parent = tree[line]
-	parent.expanded = false
-	parent.cached = true
+	local expanded = state.expanded
+	expanded[parent.path] = nil
 
 	local name = vim.api.nvim_buf_get_lines(buf_id, line - 1, line, true)[1]
 	name = name:gsub('v', '>', 1)
 	vim.api.nvim_buf_set_lines(buf_id, line - 1, line, true, {name})
 
 	local sub_items = 0
+	local path
 	while #tree > line and tree[line + 1].depth > parent.depth do
+		path = tree[line + 1].path
 		sub_items = sub_items + 1
-		table.insert(parent.cached_entries, tree[line + 1])
+		state.fs_marked[path] = nil
+		state.fs_target[path] = nil
 		table.remove(tree, line + 1)
-	end
-	if config.options.cache then
-		parent.cached_lines =
-			vim.api.nvim_buf_get_lines(buf_id, line, line + sub_items, true)
 	end
 
 	vim.api.nvim_buf_set_lines(buf_id, line, line + sub_items, true, {})
-	return tree
 end
 
 function M.change_dir(path)
 	utils.check_or_make_main_win()
 	vim.schedule(function ()
 		for _, win in ipairs(vim.api.nvim_list_wins()) do
-			vim.api.nvim_win_call(win, function () vim.cmd.lcd(path) end)
+			vim.api.nvim_win_call(win, function () vim.cmd('silent lcd' .. path) end)
 		end
 		M.render()
 		vim.api.nvim_set_current_win(state:get_window())
@@ -124,14 +123,18 @@ function M.ascend()
 	vim.schedule(function ()
 		local new_path = vim.fs.abspath('.'):gsub('/[^/]+$', '')
 		if new_path == '' then new_path = '/' end
+		state.fs_marked = {}
+		state.fs_target = {}
 		M.change_dir(new_path)
 	end)
 end
 
 function M.descend()
 	local line = vim.fn.line('.')
-	if state:get_tree()[line].type ~= 'directory' then return end
-	local path = state:get_tree()[line].path
+	if state.tree[line].type ~= 'directory' then return end
+	local path = state.tree[line].path
+	state.fs_marked = {}
+	state.fs_target = {}
 	M.change_dir(path)
 end
 
@@ -150,7 +153,7 @@ function M.action()
 	local line_str = vim.api.nvim_buf_get_lines(buf_id, line - 1, line, true)[1]
 	line_str = line_str:gsub('| ', ''):gsub('/', ''):gsub('[>v+] ', '')
 
-	local tree = state:get_tree()
+	local tree = state.tree
 	local parent = tree[line]
 	if parent.type == 'file' then
 		utils.check_or_make_main_win()
@@ -163,10 +166,10 @@ function M.action()
 		return
 	end
 
-	if parent.type == 'directory' and parent.expanded then
-		generate_tree_action(buf_id, tree, line, close)
-	elseif parent.type == 'directory' and not parent.expanded then
-		generate_tree_action(buf_id, tree, line, expand)
+	if parent.type == 'directory' and state.expanded[parent.path] then
+		generate_tree_action(line, close)
+	elseif parent.type == 'directory' and not state.expanded[parent.path] then
+		generate_tree_action(line, expand)
 	end
 
 	M.highlight()
@@ -177,7 +180,7 @@ function M.highlight()
 	local buf_id = state:get_buffer()
 	local ns_id = state:get_namespace()
 	vim.api.nvim_buf_clear_namespace(buf_id, ns_id, 0, -1)
-	local tree = state:get_tree()
+	local tree = state.tree
 	local dir_hl = vim.api.nvim_get_hl_id_by_name('netrwDir')
 	local bar_hl = vim.api.nvim_get_hl_id_by_name('Special')
 	local plain_hl = vim.api.nvim_get_hl_id_by_name('netrwPlain')
@@ -210,21 +213,14 @@ function M.render()
 		depth = -1,
 		path = path,
 		type = 'Header',
-		expanded = false,
-		cached = false,
-		cached_lines = {},
-		cached_entries = {},
 	}
 	local parent_dir_entry = {
 		depth = -1,
 		path = path,
 		type = 'directory',
-		expanded = false,
-		cached = false,
-		cached_lines = {},
-		cached_entries = {},
 	}
 
+	-- Make border only span width of window? At least make file path wrap
 	local border = '=========================================='
 	local title_line = ' File Tree'
 	local home_dir = tostring(os.getenv('HOME') or os.getenv('USERPROFILE'))
@@ -232,8 +228,24 @@ function M.render()
 	if path_line ~= '/' then path_line = path_line .. '/' end
 	path_line = ' Path: ' .. path_line
 
+	local keymaps = {
+		' ┌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐',
+		' ╎ Keymaps:              ╎',
+		' ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤',
+		' ╎ [M]ove, [R]ename,     ╎',
+		' ╎ [C]opy, [D]elete,     ╎',
+		' ╎ [m]ark [t]arget (mt), ╎',
+		' ╎ [m]ark [s]ource (ms)  ╎',
+		' └╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┘',
+	}
+
 	local user_header = config.options.header
 	local header_lines = user_header or {border, title_line, path_line, border}
+	if config.options.show_keymaps then
+		for _, line in pairs(keymaps) do
+			table.insert(header_lines, line)
+		end
+	end
 	state:set_header_height(#header_lines)
 	local header_height = state:get_header_height()
 	table.insert(header_lines, '../')
@@ -244,15 +256,13 @@ function M.render()
 	end
 	table.insert(starting_array, parent_dir_entry)
 
-	state:set_tree(starting_array)
+	state.tree = starting_array
 
 	vim.bo[buf_id].modifiable = true
 	vim.api.nvim_buf_set_lines(buf_id, 0, -1, false, {})
 	vim.api.nvim_buf_set_lines(buf_id, 0, 1, true, header_lines)
 	vim.api.nvim_win_set_cursor(win_id, {header_height + 1, 0})
-	state:set_tree(
-		print_paths(buf_id, starting_array, header_height + 1)
-	)
+	print_paths(header_height + 1)
 	vim.bo[buf_id].modifiable = false
 	M.highlight()
 end
