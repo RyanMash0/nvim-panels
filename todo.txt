@@ -13,6 +13,7 @@
 ? Add QuickFix autocommand
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted
+- Add buffer bar scrolls to active tab
 - Add expand all (one layer deep)
 - Add goto in file tree
 - Add modified status + close in buffer bar

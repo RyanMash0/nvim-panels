@@ -101,7 +101,7 @@ local function close(line)
 
 	local path
 	local i = 1
-	while tree[line + i].depth > parent.depth do
+	while tree[line + i] and tree[line + i].depth or -2 > parent.depth do
 		path = tree[line + i].path
 		state.fs_sources[path] = nil
 		state.fs_target[path] = nil
