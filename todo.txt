@@ -16,7 +16,6 @@
 - Add multiple file tree views with highlighted numbers at the top
 - Add text highlighting to status line for multiple terminal tabs
 - Add moving tabs
-- Add add in file tree
 - Add type annotations
 - Add documentation
 - Add health

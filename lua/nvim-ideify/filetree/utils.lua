@@ -93,7 +93,7 @@ function M.get_full_header()
 	return header
 end
 
-function M.file_rename()
+function M.fs_rename()
 	local ui = require('nvim-ideify.filetree.ui')
 	local line = vim.fn.line('.')
 	local path = state.tree[line].path
@@ -112,7 +112,7 @@ function M.file_rename()
 	)
 end
 
-function M.file_delete()
+function M.fs_delete()
 	local ui = require('nvim-ideify.filetree.ui')
 	local line = vim.fn.line('.')
 	local parent = state.tree[line]
@@ -156,11 +156,11 @@ function M.file_delete()
 	)
 end
 
-function M.file_delete_visual()
+function M.fs_delete_visual()
 	local ui = require('nvim-ideify.filetree.ui')
 	local start_line = vim.fn.line('v')
 	local end_line = vim.fn.line('.')
-	if start_line == end_line then return M.file_delete() end
+	if start_line == end_line then return M.fs_delete() end
 	local parents = {}
 	local curdir = vim.fn.getcwd()
 	local relpaths = {}
@@ -248,7 +248,7 @@ function M.mark_source()
 	ui.render()
 end
 
-function M.file_move()
+function M.fs_move()
 	local ui = require('nvim-ideify.filetree.ui')
 	local sources = state.fs_sources
 	local target, _ = next(state.fs_target)
@@ -263,7 +263,7 @@ function M.file_move()
 	ui.render()
 end
 
-function M.file_copy()
+function M.fs_copy()
 	local ui = require('nvim-ideify.filetree.ui')
 	local sources = state.fs_sources
 	local target, _ = next(state.fs_target)
@@ -276,6 +276,40 @@ function M.file_copy()
 	state.fs_sources = {}
 	state.fs_target = {}
 	ui.render()
+end
+
+function M.file_new()
+	local ui = require('nvim-ideify.filetree.ui')
+	local target, _ = next(state.fs_target)
+	target = target or vim.fn.getcwd()
+
+	vim.ui.input(
+		{prompt = 'File name: ',},
+		function(input)
+			if input == nil or input == '' then return end
+			local new_file_str = 'touch ' .. '"' .. target .. '/' .. input .. '"'
+			vim.fn.system(new_file_str)
+			state.fs_target = {}
+			ui.render()
+		end
+	)
+end
+
+function M.dir_new()
+	local ui = require('nvim-ideify.filetree.ui')
+	local target, _ = next(state.fs_target)
+	target = target or vim.fn.getcwd()
+
+	vim.ui.input(
+		{prompt = 'Directory name: ',},
+		function(input)
+			if input == nil or input == '' then return end
+			local new_file_str = 'mkdir ' .. '"' .. target .. '/' .. input .. '"'
+			vim.fn.system(new_file_str)
+			state.fs_target = {}
+			ui.render()
+		end
+	)
 end
 
 return M
