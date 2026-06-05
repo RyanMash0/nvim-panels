@@ -62,6 +62,22 @@ vim.api.nvim_create_autocmd('TextChanged', {
 	end
 })
 
+vim.api.nvim_create_autocmd('WinResized', {
+	group = 'IDEify',
+	callback = function(args)
+		local utils = require('nvim-ideify.utils')
+		local win = tonumber(args.match)
+		local modules = utils.get_modules()
+		local mod_win
+		for _, module in pairs(modules) do
+			mod_win = module:get_state():get_window()
+			if win == mod_win then
+				module:get_ui().render()
+			end
+		end
+	end
+})
+
 -- local events = vim.fn.getcompletion('', 'event')
 -- local forbidden_events = {
 -- 	["BufReadCmd"] = true,
