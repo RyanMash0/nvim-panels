@@ -19,9 +19,25 @@ M.toggle = function()
 	end
 end
 M.reset = ui.reset
+M.hard_reset = function()
+	ui.close()
+	ui.open()
+end
 
 M.refresh_tree = filetree:get_ui().render
 M.refresh_bufferbar = bufferbar:get_ui().render
+
+function M.toggle_panel(direction)
+	local state = require('nvim-ideify.state')
+	local utils = require('nvim-ideify.utils')
+	local wins = utils.get_plugin_wins()
+	local panel_confs = config.options.layout
+	if not wins[direction] then return end
+	if not panel_confs[direction] then return end
+
+	panel_confs[direction].hidden = not panel_confs[direction].hidden
+	if state.active then ui.open() end
+end
 
 function M.setup(opts)
 	config.setup(opts)

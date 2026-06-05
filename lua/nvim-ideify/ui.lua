@@ -192,7 +192,12 @@ end
 
 local function open_panel(direction)
 	local panel = get_panel_from_direction(direction)
-	if not panel.module() then return end
+	local adj_direction = pos[direction]
+	local panel_g_conf = config.options.layout[adj_direction]
+
+	if not panel.module() or panel_g_conf and panel_g_conf.hidden then
+		return
+	end
 
 	local listed = panel.module():get_config().options.buffer.listed
 	local scratch = panel.module():get_config().options.buffer.scratch
@@ -231,11 +236,20 @@ end
 
 local function unhide_panel(direction)
 	local panel = get_panel_from_direction(direction)
-	if not panel.module() then return end
+	local adj_direction = pos[direction]
+	local panel_g_conf = config.options.layout[adj_direction]
 
-	local opts = panel.module():get_state():get_win_config()
-	local win = vim.api.nvim_open_win(panel.module():get_state():get_buffer(), false, opts)
-	panel.module():get_state():set_window(win)
+	if not panel.module() or panel_g_conf and panel_g_conf.hidden then
+		return
+	end
+
+	local panel_state = panel.module():get_state()
+	local opts = panel_state:get_win_config()
+
+	if not utils.buf_valid(panel_state:get_buffer()) then return end
+
+	local win = vim.api.nvim_open_win(panel_state:get_buffer(), false, opts)
+	panel_state:set_window(win)
 
 	local win_opts = panel.module():get_config().options.window.opts
 	for key, val in pairs(win_opts) do
@@ -388,6 +402,8 @@ end
 local function panel_size_reset(direction)
 	local panel = get_panel_from_direction(direction)
 	if not panel.module() then return end
+	local panel_win = panel.module():get_state():get_window()
+	if not utils.win_valid(panel_win) then return end
 
 	local opts
 	if direction == pos.left or direction == pos.right then
@@ -398,10 +414,10 @@ local function panel_size_reset(direction)
 	opts.split = direction
 
 	vim.api.nvim_set_current_win(state.wins.main)
-	vim.api.nvim_win_set_config(panel.module():get_state():get_window(), opts)
+	vim.api.nvim_win_set_config(panel_win, opts)
 
 	panel.module():get_state():set_win_config(
-		vim.api.nvim_win_get_config(panel.module():get_state():get_window())
+		vim.api.nvim_win_get_config(panel_win)
 	)
 end
 

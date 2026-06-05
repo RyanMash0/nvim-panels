@@ -107,6 +107,7 @@ function M.get_plugin_wins()
 end
 
 function M.is_plugin_win(win)
+	if win < 1000 then return false end
 	local wins = M.get_plugin_wins()
 	local l_win = wins.left
 	local r_win = wins.right

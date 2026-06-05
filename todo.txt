@@ -3,6 +3,8 @@
 -------------------------------------------------------------------------------
 - Resizing tree clicks on files
 - Buffer bar should reveal entire tab at a time on edge
+- Resizing tree throws error sometimes
+- Entering an open file while the buffer is not saved throws an error
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
@@ -13,7 +15,7 @@
   all buffers deleted
 - Add expand all (one layer deep)
 - Add goto in file tree
-- Add move and hide panels with user commands
+- Add move panels with user commands
 - Add modified status + close in buffer bar
 - Add moving tabs
 - Add minimal width mode for buffer bar

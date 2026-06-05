@@ -40,6 +40,20 @@ vim.api.nvim_create_user_command(
 )
 
 vim.api.nvim_create_user_command(
+	'IDEifyHardReset',
+	require('nvim-ideify').hard_reset,
+	{ nargs = 1 }
+)
+
+vim.api.nvim_create_user_command(
+	'IDEifyTogglePanel',
+	function(args)
+		require('nvim-ideify').toggle_panel(args.args)
+	end,
+	{ nargs = 1 }
+)
+
+vim.api.nvim_create_user_command(
 	'IDEifyRefreshFileTree',
 	require('nvim-ideify').refresh_tree,
 	{ nargs = 0 }

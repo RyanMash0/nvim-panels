@@ -8,24 +8,28 @@ M.defaults = {
 				return require('nvim-ideify.filetree')
 			end,
 			width = 30,
+			hidden = false,
 		},
 		right = {
 			module = function ()
 				return nil
 			end,
 			width = 0,
+			hidden = false,
 		},
 		top = {
 			module = function ()
 				return require('nvim-ideify.bufferbar')
 			end,
 			height = 2,
+			hidden = false
 		},
 		bottom = {
 			module = function ()
 				return require('nvim-ideify.terminal')
 			end,
 			height = 10,
+			hidden = false
 		},
 	},
 	split_order = {
