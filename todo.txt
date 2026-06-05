@@ -1,28 +1,21 @@
 -------------------------------------------------------------------------------
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
+- Resizing tree clicks on files
+- Buffer bar should reveal entire tab at a time on edge
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
 -------------------------------------------------------------------------------
-X Add statusline updating for buffer bar
-X Add git status highlighting to file tree/buffer bar
-X Make a floating window for a minimize button (do this in main ui)
-X Add minimized status for modules in state
 ? Add rename file in buffer bar
 ? Add QuickFix autocommand
-? Add option to make buffer bar one line (style = detailed ?)
-- Add disabled config for each panel
-- Add terminal buffers
-- Add file tree buffers
-- Expose and encapsulate target and/or other state or utils variables
-- Add modified status in buffer bar
+- Add move and hide panels with user commands
+- Add modified status + close in buffer bar
+- Add minimal width mode for buffer bar
+- Add auto resize for file tree
 - Add multiple file tree views with highlighted numbers at the top
 - Add text highlighting to status line for multiple terminal tabs
-- Add moving panels during session
-- Allow moving tabs
-- Add move in file tree
-- Add copy in file tree
+- Add moving tabs
 - Add add in file tree
 - Add type annotations
 - Add documentation

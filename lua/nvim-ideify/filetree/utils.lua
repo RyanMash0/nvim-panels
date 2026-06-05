@@ -23,6 +23,7 @@ function M.get_dir_array(text, path)
 			dir_array[i] = dir_array[i] .. item
 		else
 			dir_array[i + 1] = spaces .. item
+			i = i + 1
 		end
 	end
 

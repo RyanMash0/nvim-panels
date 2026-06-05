@@ -4,6 +4,11 @@ local utils = require('nvim-ideify.filetree.utils')
 local g_state = require('nvim-ideify.state')
 local g_utils = require('nvim-ideify.utils')
 
+M.get_default_header = utils.get_default_header
+M.get_path_array = utils.get_path_array
+M.get_target_array = utils.get_target_array
+M.get_dir_array = utils.get_dir_array
+
 local function generate_tree_action(line, func)
 	local buf_id = state:get_buffer()
 	vim.bo[buf_id].modifiable = true
@@ -108,9 +113,9 @@ end
 
 function M.change_dir(path)
 	g_utils.check_or_make_main_win()
-	vim.schedule(function ()
+	vim.schedule(function()
 		for _, win in ipairs(vim.api.nvim_list_wins()) do
-			vim.api.nvim_win_call(win, function () vim.cmd('silent lcd' .. path) end)
+			vim.api.nvim_win_call(win, function() vim.cmd('silent lcd' .. path) end)
 		end
 		M.render()
 		vim.api.nvim_set_current_win(state:get_window())
@@ -119,7 +124,7 @@ function M.change_dir(path)
 end
 
 function M.ascend()
-	vim.schedule(function ()
+	vim.schedule(function()
 		local new_path = vim.fs.abspath('.'):gsub('/[^/]+$', '')
 		if new_path == '' then new_path = '/' end
 		state.fs_sources = {}
@@ -193,7 +198,10 @@ function M.highlight()
 	for i, entry in ipairs(tree) do
 		name_start = entry.depth > 0 and entry.depth * 2 or 0
 		line_len = #vim.api.nvim_buf_get_lines(buf_id, i - 1, i, true)[1]
-		vim.api.nvim_buf_set_extmark(buf_id, ns_id, i - 1, 0, {end_col = name_start, hl_group = bar_hl})
+		vim.api.nvim_buf_set_extmark(
+			buf_id, ns_id, i - 1, 0,
+			{end_col = name_start, hl_group = bar_hl}
+		)
 
 		if entry.type == 'Header' then
 			hl_group = header_hl
@@ -211,7 +219,10 @@ function M.highlight()
 			hl_group = source_hl
 		end
 
-		vim.api.nvim_buf_set_extmark(buf_id, ns_id, i - 1, name_start, {end_col = line_len, hl_group = hl_group})
+		vim.api.nvim_buf_set_extmark(
+			buf_id, ns_id, i - 1, name_start,
+			{end_col = line_len, hl_group = hl_group}
+		)
 	end
 end
 

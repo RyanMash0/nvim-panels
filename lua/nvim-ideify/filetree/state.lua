@@ -5,9 +5,7 @@ M.window = -1
 M.win_config = {}
 
 M.namespace = vim.api.nvim_create_namespace('IDEifyFileTree')
-M.fs_namespace = vim.api.nvim_create_namespace('IDEifyFileTreeFS')
 M.header_height = 0
-M.target_loc = -1
 M.tree = {}
 M.expanded = {}
 M.fs_target = {}
