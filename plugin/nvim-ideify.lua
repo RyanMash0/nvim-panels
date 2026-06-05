@@ -54,6 +54,34 @@ vim.api.nvim_create_user_command(
 )
 
 vim.api.nvim_create_user_command(
+	'IDEifySwapPanels',
+	function(args)
+		if #args.fargs ~= 2 then
+			vim.print('You must provide exactly two panels as arguments.')
+			return
+		end
+
+		require('nvim-ideify').swap_panels(args.fargs[1], args.fargs[2])
+	end,
+	{ nargs = '+' }
+)
+
+vim.api.nvim_create_user_command(
+	'IDEifyResizePanel',
+	function(args)
+		if #args.fargs ~= 2 then
+			vim.print('You must provide a panel and a size arguments.')
+			return
+		end
+		local direction = args.fargs[1]
+		local size = tonumber(args.fargs[2])
+
+		require('nvim-ideify').resize_panel(direction, size)
+	end,
+	{ nargs = '+' }
+)
+
+vim.api.nvim_create_user_command(
 	'IDEifyRefreshFileTree',
 	require('nvim-ideify').refresh_tree,
 	{ nargs = 0 }

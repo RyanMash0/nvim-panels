@@ -422,6 +422,7 @@ local function panel_size_reset(direction)
 end
 
 function M.reset()
+	if not state.active then return end
 	M.show()
 
 	panel_size_reset(config.options.split_order.first)

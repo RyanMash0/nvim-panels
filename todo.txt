@@ -15,7 +15,6 @@
   all buffers deleted
 - Add expand all (one layer deep)
 - Add goto in file tree
-- Add move panels with user commands
 - Add modified status + close in buffer bar
 - Add moving tabs
 - Add minimal width mode for buffer bar

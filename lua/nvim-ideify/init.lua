@@ -29,14 +29,55 @@ M.refresh_bufferbar = bufferbar:get_ui().render
 
 function M.toggle_panel(direction)
 	local state = require('nvim-ideify.state')
-	local utils = require('nvim-ideify.utils')
-	local wins = utils.get_plugin_wins()
 	local panel_confs = config.options.layout
-	if not wins[direction] then return end
 	if not panel_confs[direction] then return end
 
 	panel_confs[direction].hidden = not panel_confs[direction].hidden
 	if state.active then ui.open() end
+end
+
+function M.swap_panels(direction1, direction2)
+	local state = require('nvim-ideify.state')
+	local panel_confs = config.options.layout
+	if not panel_confs[direction1] or not panel_confs[direction2] then return end
+
+	local tmp_direction1 = panel_confs[direction1]
+	local tmp_direction2 = panel_confs[direction2]
+
+	local function swap_size_params(width_direction, height_direction)
+		local tmp_width = width_direction.width
+		local tmp_height = height_direction.height
+
+		width_direction.width = nil
+		width_direction.height = tmp_width
+
+		height_direction.height = nil
+		height_direction.width = tmp_height
+	end
+
+	if tmp_direction1.width and not tmp_direction2.width then
+		swap_size_params(tmp_direction1, tmp_direction2)
+	elseif tmp_direction2.width and not tmp_direction1.width then
+		swap_size_params(tmp_direction2, tmp_direction1)
+	end
+
+	panel_confs[direction1] = tmp_direction2
+	panel_confs[direction2] = tmp_direction1
+
+	local active = state.active
+
+	ui.close()
+	if active then ui.open() end
+end
+
+function M.resize_panel(direction, size)
+	local panel_confs = config.options.layout
+	if not panel_confs[direction] then return end
+
+	if panel_confs[direction].width then panel_confs[direction].width = size
+	elseif panel_confs[direction].height then panel_confs[direction].height = size end
+
+	ui.reset()
 end
 
 function M.setup(opts)
