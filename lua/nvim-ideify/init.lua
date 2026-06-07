@@ -24,8 +24,10 @@ M.hard_reset = function()
 	ui.open()
 end
 
-M.refresh_tree = filetree:get_ui().render
-M.refresh_bufferbar = bufferbar:get_ui().render
+M.tree_refresh = filetree:get_ui().render
+M.bufferbar_refresh = bufferbar:get_ui().render
+M.bufferbar_next = bufferbar.buffer_next
+M.bufferbar_previous = bufferbar.buffer_previous
 
 function M.panel_toggle(direction)
 	local state = require('nvim-ideify.state')

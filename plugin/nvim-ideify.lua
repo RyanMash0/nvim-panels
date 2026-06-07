@@ -82,13 +82,25 @@ vim.api.nvim_create_user_command(
 )
 
 vim.api.nvim_create_user_command(
-	'IDEifyRefreshFileTree',
-	require('nvim-ideify').refresh_tree,
+	'IDEifyFileTreeRefresh',
+	require('nvim-ideify').tree_refresh,
 	{ nargs = 0 }
 )
 
 vim.api.nvim_create_user_command(
-	'IDEifyRefreshBufferBar',
-	require('nvim-ideify').refresh_bufferbar,
+	'IDEifyBufferBarRefresh',
+	require('nvim-ideify').bufferbar_refresh,
+	{ nargs = 0 }
+)
+
+vim.api.nvim_create_user_command(
+	'IDEifyBufferBarNext',
+	require('nvim-ideify').bufferbar_next,
+	{ nargs = 0 }
+)
+
+vim.api.nvim_create_user_command(
+	'IDEifyBufferBarPrevious',
+	require('nvim-ideify').bufferbar_previous,
 	{ nargs = 0 }
 )

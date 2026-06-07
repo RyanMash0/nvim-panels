@@ -25,6 +25,16 @@ M.defaults = {
 M.options = vim.deepcopy(M.defaults)
 
 function M.setup(opts)
+	vim.defer_fn(function()
+		local yank_hl_pre = vim.api.nvim_get_hl(0, { name = 'Green' })
+		local yank_hl = {}
+		for key, val in pairs(yank_hl_pre) do
+			yank_hl[key] = val
+		end
+		yank_hl.reverse = true
+
+		vim.api.nvim_set_hl(0, 'IDEifyBufferBarYank', yank_hl)
+	end, 3000)
 	M.options = vim.tbl_deep_extend('force', M.defaults, opts or {})
 end
 

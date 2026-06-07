@@ -1,8 +1,9 @@
 local M = {}
 local config = require('nvim-ideify.bufferbar.config')
 local state = require('nvim-ideify.bufferbar.state')
+local utils = require('nvim-ideify.bufferbar.utils')
 local g_state = require('nvim-ideify.state')
-local utils = require('nvim-ideify.utils')
+local g_utils = require('nvim-ideify.utils')
 
 local function truncate_end(str, num)
 	if #str <= num then return str end
@@ -31,63 +32,65 @@ function M.action()
 	local win_id = state:get_window()
 	local pos = vim.api.nvim_win_get_cursor(win_id)
 	local cur_col = pos[2]
-	local buffer_info = state:get_buffer_info()
-	local switch_buf
 	local button = pos[1] == 1 and state.buttons[cur_col]
 
 	if button and not vim.bo[button].modified then
-		-- vim.bo[button].buflisted = false
-		-- if vim.api.nvim_buf_is_loaded(button) then
-			-- vim.api.nvim_buf_delete(button, { unload = true })
-		-- end
 		vim.api.nvim_buf_delete(button, {})
 		M.render()
 	end
 
-	for key, val in pairs(buffer_info) do
-		if val ~= vim.NIL and cur_col >= val.first and cur_col <= val.last then
-			switch_buf = key
-			break
-		end
-	end
-
+	local switch_buf = utils.get_sel_buffer()
 	if not switch_buf then return end
-	utils.check_or_make_main_win()
-	local last_win = utils.win_valid(g_state.wins.last) and g_state.wins.last
+
+	g_utils.check_or_make_main_win()
+	local last_win = g_utils.win_valid(g_state.wins.last) and g_state.wins.last
 
 	vim.api.nvim_win_set_buf(last_win or g_state.wins.main, switch_buf)
 end
 
 function M.highlight()
-	utils.check_or_make_main_win()
+	g_utils.check_or_make_main_win()
 	local buf_id = state:get_buffer()
 	local ns = state:get_namespace()
 	vim.api.nvim_buf_clear_namespace(buf_id, ns, 0, -1)
-	local last_win = utils.win_valid(g_state.wins.last) and g_state.wins.last
+	local last_win = g_utils.win_valid(g_state.wins.last) and g_state.wins.last
 	local cur_buf = vim.api.nvim_win_get_buf(last_win or g_state.wins.main)
+	local yanked = state.yanked
 	local hl_region = state:get_buffer_info()[cur_buf]
+	local yank_hl_region = state:get_buffer_info()[yanked]
 	local hl_group = vim.api.nvim_get_hl_id_by_name('TabLineSel')
+	local yank_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarYank')
 	-- local hl_group_bold = vim.api.nvim_get_hl_id_by_name('markdownBold')
 	if not hl_region or hl_region == vim.NIL then return end
-	vim.api.nvim_buf_set_extmark(buf_id, ns, 0, hl_region.first, {
-		end_col = hl_region.last,
-		hl_group = hl_group
-	})
 
-	-- vim.api.nvim_buf_set_extmark(buf_id, ns, 0, hl_region.last - 4, {
-	-- 	end_col = hl_region.last,
-	-- 	hl_group = hl_group_bold - 2
-	-- })
-	--
-	vim.api.nvim_buf_set_extmark(buf_id, ns, 1, hl_region.first, {
-		end_col = hl_region.last,
-		hl_group = hl_group
-	})
+	if cur_buf ~= yanked then
+		vim.api.nvim_buf_set_extmark(buf_id, ns, 0, hl_region.first, {
+			end_col = hl_region.last,
+			hl_group = hl_group
+		})
+
+		vim.api.nvim_buf_set_extmark(buf_id, ns, 1, hl_region.first, {
+			end_col = hl_region.last,
+			hl_group = hl_group
+		})
+	end
+
+	if yank_hl_region then
+		vim.api.nvim_buf_set_extmark(buf_id, ns, 0, yank_hl_region.first, {
+			end_col = yank_hl_region.last,
+			hl_group = yank_hl_group
+		})
+
+		vim.api.nvim_buf_set_extmark(buf_id, ns, 1, yank_hl_region.first, {
+			end_col = yank_hl_region.last,
+			hl_group = yank_hl_group
+		})
+	end
 end
 
 function M.render()
 	local buf_id = state:get_buffer()
-	if not utils.buf_valid(buf_id) then return end
+	if not g_utils.buf_valid(buf_id) then return end
 	if not state.buffer_order then state.buffer_order = vim.api.nvim_list_bufs() end
 	local buffers = state.buffer_order
 	local bufs_filtered = {}

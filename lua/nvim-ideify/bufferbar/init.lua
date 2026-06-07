@@ -16,6 +16,52 @@ function M:get_keymaps()
 	return require('nvim-ideify.bufferbar.keymaps')
 end
 
+function M.buffer_next()
+	local g_utils = require('nvim-ideify.utils')
+	local g_state = require('nvim-ideify.state')
+	local state = require('nvim-ideify.bufferbar.state')
+	if not g_state.opened then
+		local cmd = vim.api.nvim_replace_termcodes('<Cmd>', true, false, false)
+		local cr = vim.api.nvim_replace_termcodes('<CR>', true, false, false)
+		vim.api.nvim_feedkeys(cmd .. 'bn' .. cr, 'n', false)
+	end
+
+	local win = vim.api.nvim_get_current_win()
+	if g_utils.is_plugin_win(win) then return end
+
+	local cur_buf = vim.api.nvim_win_get_buf(win)
+	local cur_buf_info = state.buffer_info[cur_buf]
+	local new_pos = cur_buf_info.position + 1
+	local num_bufs = #state.buffer_order
+	new_pos = new_pos <= num_bufs and new_pos or 1
+	local new_buf = state.buffer_order[new_pos]
+
+	vim.api.nvim_win_set_buf(win, new_buf)
+end
+
+function M.buffer_previous()
+	local g_utils = require('nvim-ideify.utils')
+	local g_state = require('nvim-ideify.state')
+	local state = require('nvim-ideify.bufferbar.state')
+	if not g_state.opened then
+		local cmd = vim.api.nvim_replace_termcodes('<Cmd>', true, false, false)
+		local cr = vim.api.nvim_replace_termcodes('<CR>', true, false, false)
+		vim.api.nvim_feedkeys(cmd .. 'bp' .. cr, 'n', false)
+	end
+
+	local win = vim.api.nvim_get_current_win()
+	if g_utils.is_plugin_win(win) then return end
+
+	local cur_buf = vim.api.nvim_win_get_buf(win)
+	local cur_buf_info = state.buffer_info[cur_buf]
+	local new_pos = cur_buf_info.position - 1
+	local num_bufs = #state.buffer_order
+	new_pos = new_pos >= 1 and new_pos or num_bufs
+	local new_buf = state.buffer_order[new_pos]
+
+	vim.api.nvim_win_set_buf(win, new_buf)
+end
+
 vim.api.nvim_create_augroup('IDEifyBufferBar', { clear = true })
 vim.api.nvim_create_autocmd('BufEnter', {
 	group = 'IDEifyBufferBar',

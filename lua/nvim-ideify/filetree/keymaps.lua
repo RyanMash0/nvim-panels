@@ -21,7 +21,6 @@ function M.setup()
 		state.fs_target = {}
 		state.fs_sources = {}
 		ui.render()
-		return '<Esc>'
 	end)
 	local toggle = vim.schedule_wrap(function()
 		config.options.show_keymaps = not config.options.show_keymaps
