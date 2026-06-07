@@ -4,23 +4,23 @@ local ui = require('nvim-ideify.bufferbar.ui')
 
 function M.setup()
 	local opts = { buffer = state:get_buffer(), expr = true, remap = false }
-	local switch = vim.schedule_wrap(ui.switch_buffer)
+	local action = vim.schedule_wrap(ui.action)
 
-	vim.keymap.set('n', '<CR>', switch, opts)
-	vim.keymap.set('n', '<C-M>', switch, opts)
+	vim.keymap.set('n', '<CR>', action, opts)
+	vim.keymap.set('n', '<C-M>', action, opts)
 
-	state:set_on_click(switch)
+	state:set_on_click(action)
 
 	local function generate_buf_scroll(flags)
 		return function()
-			local pos = vim.fn.col('.')
-			vim.fn.search('[^ \\u2502]\\+', flags, vim.fn.line('.'))
-			local new_pos = vim.fn.col('.')
-			if new_pos == pos and new_pos > 3 then
-				vim.cmd.normal('$b')
-			elseif new_pos == pos then
-				vim.cmd.normal('0w')
-			end
+			local win = state:get_window()
+			local line = vim.api.nvim_win_get_cursor(win)[1]
+			if line == 1 then
+				vim.fn.search([[\( \zs/\| \zs\./\|⎿\zsx\|⎿\zs+\)]], flags, line)
+				else
+				vim.fn.search([[\(^ \zs.\|⎹ \zs.\)]], flags, line)
+				end
+			--\|\zs⎺
 		end
 	end
 
@@ -28,9 +28,8 @@ function M.setup()
 	vim.keymap.set('n', 'w', generate_buf_scroll('W'), opts)
 	vim.keymap.set('n', 'b', generate_buf_scroll('Wb'), opts)
 
-	opts.remap = true
-	vim.keymap.set('n', '<S-ScrollWheelUp>', 'w', opts)
-	vim.keymap.set('n', '<S-ScrollWheelDown>', 'b', opts)
+	vim.keymap.set('n', '<S-ScrollWheelUp>', generate_buf_scroll('Wb'), opts)
+	vim.keymap.set('n', '<S-ScrollWheelDown>', generate_buf_scroll('W'), opts)
 end
 
 return M

@@ -377,7 +377,7 @@ function M.module_buf_reload(module)
 
 	vim.wo[win].winfixbuf = false
 	vim.api.nvim_win_set_buf(win, buf)
-	vim.wo[win].winfixbuf = false
+	vim.wo[win].winfixbuf = true
 
 	module:get_state():set_buffer(buf)
 	if utils.buf_valid(buf_old) then

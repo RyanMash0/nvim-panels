@@ -6,6 +6,8 @@ M.win_config = {}
 
 M.namespace = vim.api.nvim_create_namespace('IDEifyBufferBar')
 M.buffer_info = {}
+M.buttons = {}
+M.buffer_order = {}
 M.on_click = nil
 
 function M:set_buffer(buf_id)

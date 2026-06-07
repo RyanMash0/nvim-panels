@@ -27,7 +27,7 @@ end
 M.refresh_tree = filetree:get_ui().render
 M.refresh_bufferbar = bufferbar:get_ui().render
 
-function M.toggle_panel(direction)
+function M.panel_toggle(direction)
 	local state = require('nvim-ideify.state')
 	local panel_confs = config.options.layout
 	if not panel_confs[direction] then return end
@@ -36,7 +36,7 @@ function M.toggle_panel(direction)
 	if state.active then ui.open() end
 end
 
-function M.swap_panels(direction1, direction2)
+function M.panel_swap(direction1, direction2)
 	local state = require('nvim-ideify.state')
 	local panel_confs = config.options.layout
 	if not panel_confs[direction1] or not panel_confs[direction2] then return end
@@ -70,7 +70,7 @@ function M.swap_panels(direction1, direction2)
 	if active then ui.open() end
 end
 
-function M.resize_panel(direction, size)
+function M.panel_resize(direction, size)
 	local panel_confs = config.options.layout
 	if not panel_confs[direction] then return end
 

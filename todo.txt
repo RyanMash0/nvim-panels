@@ -5,6 +5,7 @@
 - Buffer bar should reveal entire tab at a time on edge
 - Resizing tree throws error sometimes
 - Entering an open file while the buffer is not saved throws an error
+- Renaming a folder does not preserve expanding
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
@@ -16,7 +17,6 @@
 - Add buffer bar scrolls to active tab
 - Add expand all (one layer deep)
 - Add goto in file tree
-- Add modified status + close in buffer bar
 - Add moving tabs
 - Add minimal width mode for buffer bar
 - Add text highlighting to status line for multiple terminal tabs
