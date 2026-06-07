@@ -13,8 +13,8 @@
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted
 - Add expand all (one layer deep)
+- Add plus to buffer bar
 - Add goto in file tree
-- Add minimal width mode for buffer bar
 - Add text highlighting to status line for multiple terminal tabs
 - Add type annotations
 - Add documentation

@@ -35,10 +35,11 @@ local function buffer_delete(buf)
 		local del_pos = del_info.position
 		local new_pos = del_pos == #buf_order and del_pos - 1 or del_pos + 1
 		local new_buf = buf_order[new_pos]
+		if not g_utils.buf_valid(new_buf) then new_buf = 0 end
 		vim.api.nvim_buf_delete(buf, {})
 		M.render()
 		local col = state.buttons_r[new_buf]
-		vim.api.nvim_win_set_cursor(state:get_window(), { 1, col })
+		vim.api.nvim_win_set_cursor(state:get_window(), col and { 1, col } or { 2, 1 })
 
 		if buf ~= cur_buf then return cur_buf end
 
@@ -132,6 +133,10 @@ function M.render()
 	local interact
 	local tab_start
 	local tab_end
+	local minimal = config.options.minimal
+	local l_space = minimal and '' or ' '
+	local t_space_t = minimal and '' or ' '
+	local t_space_b = minimal and ' ' or '  '
 	for i, buf in ipairs(bufs_filtered) do
 		buf_name = vim.api.nvim_buf_get_name(buf)
 
@@ -142,7 +147,13 @@ function M.render()
 
 		truncate_len = math.max(pref_len, #dir_name)
 		file_name = buf_name:match('[^/]+$') or ''
-		file_name = truncate_end(file_name, truncate_len)
+
+		if minimal then
+			dir_name = file_name:match('^[^%.]+') or ''
+			file_name = file_name:match('%..*') or ''
+		else
+			file_name = truncate_end(file_name, truncate_len)
+		end
 
 		max_len = math.max(#dir_name, #file_name)
 
@@ -163,8 +174,8 @@ function M.render()
 		if vim.bo[buf].modified then interact = '+'
 		else interact = 'x' end
 
-		dir_str = dir_str .. ' ' .. dir_name .. ' \u{23BF}' .. interact .. '\u{23CC}'
-		file_str = file_str .. ' ' .. file_name .. '  \u{23BA}\u{23B9}'
+		dir_str = dir_str .. l_space .. dir_name .. t_space_t .. '\u{23BF}' .. interact .. '\u{23CC}'
+		file_str = file_str .. l_space .. file_name .. t_space_b .. '\u{23BA}\u{23B9}'
 		state.buttons[tab_end - 2] = buf
 		state.buttons_r[buf] = tab_end - 2
 	end

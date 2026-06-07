@@ -1,4 +1,5 @@
 local M = {}
+local config = require('nvim-ideify.bufferbar.config')
 local state = require('nvim-ideify.bufferbar.state')
 local ui = require('nvim-ideify.bufferbar.ui')
 local utils = require('nvim-ideify.bufferbar.utils')
@@ -14,6 +15,10 @@ function M.setup()
 		state.yanked = nil
 		ui.render()
 	end)
+	local toggle = vim.schedule_wrap(function()
+		config.options.minimal = not config.options.minimal
+		ui.render()
+	end)
 
 	vim.keymap.set('n', '<CR>', action, opts)
 	vim.keymap.set('n', '<C-M>', action, opts)
@@ -23,6 +28,7 @@ function M.setup()
 	vim.keymap.set('n', 'y', buffer_yank, opts)
 	vim.keymap.set('n', 'p', buffer_put_after, opts)
 	vim.keymap.set('n', 'P', buffer_put_before, opts)
+	vim.keymap.set('n', 'm', toggle, opts)
 	vim.keymap.set('n', 'w', generate_buf_scroll(''), opts)
 	vim.keymap.set('n', 'b', generate_buf_scroll('b'), opts)
 	vim.keymap.set('n', '<S-ScrollWheelUp>', generate_buf_scroll('b'), opts)

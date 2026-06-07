@@ -2,6 +2,7 @@ local M = {}
 
 M.defaults = {
 	name_pref_length = 20,
+	minimal = false,
 	window = {
 		start_opts = {
 			style = 'minimal'
