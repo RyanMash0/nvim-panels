@@ -74,6 +74,23 @@ function M.win_valid(id)
 	return true
 end
 
+function M.get_last_win_buf()
+	local g_utils = require('nvim-ideify.utils')
+	local g_state = require('nvim-ideify.state')
+	local last_win = g_utils.win_valid(g_state.wins.last) and g_state.wins.last
+	return vim.api.nvim_win_get_buf(last_win or g_state.wins.main)
+end
+
+function M.set_last_win_buf(buf)
+	local g_utils = require('nvim-ideify.utils')
+	local g_state = require('nvim-ideify.state')
+
+	g_utils.check_or_make_main_win()
+	local last_win = g_utils.win_valid(g_state.wins.last) and g_state.wins.last
+
+	vim.api.nvim_win_set_buf(last_win or g_state.wins.main, buf)
+end
+
 function M.buf_valid(id)
 	if type(id) ~= 'number' then return false end
 	if not vim.api.nvim_buf_is_valid(id) then

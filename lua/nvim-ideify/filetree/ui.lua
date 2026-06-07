@@ -165,7 +165,13 @@ function M.action()
 			g_utils.win_valid(g_state.wins.last) and g_state.wins.last
 		local win = last_win or g_state.wins.main
 		vim.api.nvim_set_current_win(win)
-		vim.cmd('edit ' .. parent.path)
+
+		local new_buf = vim.fn.bufnr(parent.path, false)
+		if new_buf == -1 then
+			vim.cmd('edit ' .. parent.path)
+		else
+			g_utils.set_last_win_buf(new_buf)
+		end
 		vim.api.nvim_set_current_win(state:get_window())
 		return
 	end

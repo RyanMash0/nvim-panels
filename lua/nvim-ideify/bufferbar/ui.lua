@@ -28,7 +28,7 @@ local function extend_length(str, num)
 end
 
 local function buffer_delete(buf)
-		local cur_buf = utils.get_cur_buf()
+		local cur_buf = g_utils.get_last_win_buf()
 		local buf_info = state.buffer_info
 		local buf_order = state.buffer_order
 		local del_info = buf_info[buf]
@@ -60,7 +60,7 @@ function M.action()
 	local check_button = button and not vim.bo[button].modified
 	local buf = check_button and buffer_delete(button) or buffer_switch()
 
-	utils.set_last_win_buf(buf)
+	g_utils.set_last_win_buf(buf)
 end
 
 function M.highlight()
@@ -68,7 +68,7 @@ function M.highlight()
 	local buf_id = state:get_buffer()
 	local ns = state:get_namespace()
 	vim.api.nvim_buf_clear_namespace(buf_id, ns, 0, -1)
-	local cur_buf = utils.get_cur_buf()
+	local cur_buf = g_utils.get_last_win_buf()
 	local yanked = state.yanked
 	local hl_region = state:get_buffer_info()[cur_buf]
 	local yank_hl_region = state:get_buffer_info()[yanked]

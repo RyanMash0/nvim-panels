@@ -3,6 +3,22 @@ local M = {}
 local state = require('nvim-ideify.filetree.state')
 local config = require('nvim-ideify.filetree.config')
 
+function M.unmark_subdirectories(path)
+	local sources = state.fs_sources
+	local target, _ = next(state.fs_target)
+	local relpath = vim.fs.relpath(path, target or '')
+	if relpath and relpath ~= '.' then
+		state.fs_target = {}
+	end
+
+	for source, _ in pairs(sources) do
+		relpath = vim.fs.relpath(path, source)
+		if relpath and relpath ~= '.' then
+			state.fs_sources[source] = nil
+		end
+	end
+end
+
 function M.get_dir_array(text, path)
 	local win_id = state:get_window()
 	local win_conf = vim.api.nvim_win_get_config(win_id)
@@ -79,7 +95,6 @@ function M.get_default_header()
 	return header
 end
 
-
 function M.get_full_header()
 	local header = config.options.header() or M.get_default_header()
 
@@ -96,7 +111,8 @@ end
 function M.fs_rename()
 	local ui = require('nvim-ideify.filetree.ui')
 	local line = vim.fn.line('.')
-	local path = state.tree[line].path
+	local entry = state.tree[line]
+	local path = entry.path
 	local dirname = vim.fs.dirname(path) .. '/'
 	local basename = vim.fs.basename(path)
 	vim.ui.input(
@@ -107,6 +123,20 @@ function M.fs_rename()
 			local new_name = dirname .. input
 			local mv_str = 'mv ' .. '"' .. path .. '" "' .. new_name .. '"'
 			vim.fn.system(mv_str)
+			if entry.type == 'directory' then
+				local expanded = state.expanded
+				local tmp
+				for p, _ in pairs(expanded) do
+					tmp = p
+					expanded[p] = nil
+					tmp = vim.fs.relpath(path, p or '')
+					if tmp and tmp == '.' then
+						p = new_name
+					elseif tmp and tmp ~= '.' then
+						p = new_name .. '/' .. tmp
+					end
+				end
+			end
 			ui.render()
 		end
 	)
@@ -224,10 +254,13 @@ function M.mark_target()
 	local parent = state.tree[line]
 	local path = parent.path
 	if parent.type ~= 'directory' then return end
-	state.fs_target = {}
 
-	if state.fs_target[path] then state.fs_target[path] = nil
-	else state.fs_target[path] = true end
+	if state.fs_target[path] then
+		state.fs_target[path] = nil
+	else
+		state.fs_target = {}
+		state.fs_target[path] = true
+	end
 
 	if state.fs_sources[path] then state.fs_sources[path] = nil end
 
@@ -310,6 +343,42 @@ function M.dir_new()
 			ui.render()
 		end
 	)
+end
+
+function M.open_subdirectories()
+	local ui = require('nvim-ideify.filetree.ui')
+	local target, _ = next(state.fs_target)
+	target = target or vim.fn.getcwd()
+	local dir_iterator = vim.fs.dir(target, { type = 'directory' })
+	local entry_path
+	state.expanded[target] = true
+	for path, type in dir_iterator do
+		if type == 'directory' then
+			entry_path = target .. '/' .. path
+			state.expanded[entry_path] = true
+		end
+	end
+
+	state.fs_target = {}
+	ui.render()
+end
+
+function M.close_subdirectories()
+	local ui = require('nvim-ideify.filetree.ui')
+	local target, _ = next(state.fs_target)
+	target = target or vim.fn.getcwd()
+	local relpath
+
+	for path, _ in pairs(state.expanded) do
+		relpath = vim.fs.relpath(target, path)
+		if relpath and relpath ~= '.' then
+			state.expanded[path] = nil
+		end
+	end
+
+	M.unmark_subdirectories(target)
+	state.fs_target = {}
+	ui.render()
 end
 
 return M

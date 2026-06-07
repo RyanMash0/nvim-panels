@@ -2,23 +2,6 @@ local M = {}
 
 local state = require('nvim-ideify.bufferbar.state')
 
-function M.get_cur_buf()
-	local g_utils = require('nvim-ideify.utils')
-	local g_state = require('nvim-ideify.state')
-	local last_win = g_utils.win_valid(g_state.wins.last) and g_state.wins.last
-	return vim.api.nvim_win_get_buf(last_win or g_state.wins.main)
-end
-
-function M.set_last_win_buf(buf)
-	local g_utils = require('nvim-ideify.utils')
-	local g_state = require('nvim-ideify.state')
-
-	g_utils.check_or_make_main_win()
-	local last_win = g_utils.win_valid(g_state.wins.last) and g_state.wins.last
-
-	vim.api.nvim_win_set_buf(last_win or g_state.wins.main, buf)
-end
-
 function M.get_sel_buffer()
 	local win = state:get_window()
 	local col = vim.api.nvim_win_get_cursor(win)[2]

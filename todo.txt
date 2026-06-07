@@ -2,18 +2,13 @@
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
 ? Resizing tree clicks on files
-- Entering an open file while the buffer is not saved throws an error
-- Renaming a folder does not preserve expanding
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
 -------------------------------------------------------------------------------
-? Add multiple file tree views with highlighted numbers at the top
 ? Add QuickFix autocommand
 - Add home screen on blank buffer and only allow single buffer instance when
-  all buffers deleted
-- Add expand all (one layer deep)
-- Add plus to buffer bar
+  all buffers deleted by making single "eternal" buffer
 - Add goto in file tree
 - Add text highlighting to status line for multiple terminal tabs
 - Add type annotations
