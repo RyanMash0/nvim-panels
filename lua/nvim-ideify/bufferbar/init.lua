@@ -65,8 +65,20 @@ end
 vim.api.nvim_create_augroup('IDEifyBufferBar', { clear = true })
 vim.api.nvim_create_autocmd('BufEnter', {
 	group = 'IDEifyBufferBar',
-	callback = function()
-		vim.defer_fn(M:get_ui().render, 10)
+	callback = function(args)
+		local state = require('nvim-ideify.bufferbar.state')
+		-- local g_utils = require('nvim-ideify.')
+		local buf_info = state.buffer_info[args.buf]
+
+		vim.defer_fn(function()
+			if buf_info and buf_info.first and state:get_window() > 0 then
+				vim.api.nvim_win_set_cursor(state:get_window(), { 2, buf_info.last})
+				vim.api.nvim_win_set_cursor(state:get_window(), { 2, buf_info.first})
+				vim.api.nvim_win_set_cursor(state:get_window(), { 2, buf_info.first + 1})
+			end
+
+			M:get_ui().render()
+		end, 10)
 	end
 })
 
@@ -97,11 +109,11 @@ vim.api.nvim_create_autocmd({'BufDelete'}, {
 		local buf = args.buf
 		local buf_info = state.buffer_info[buf]
 		local position
-		if buf_info then
-			position = buf_info.position
-			state.buffer_info[buf] = nil
-			table.remove(state.buffer_order, position)
-		end
+		if not buf_info then return end
+
+		position = buf_info.position
+		state.buffer_info[buf] = nil
+		table.remove(state.buffer_order, position)
 	end,
 })
 

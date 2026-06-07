@@ -1,8 +1,7 @@
 -------------------------------------------------------------------------------
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
-- Resizing tree clicks on files
-- Buffer bar should reveal entire tab at a time on edge
+? Resizing tree clicks on files
 - Entering an open file while the buffer is not saved throws an error
 - Renaming a folder does not preserve expanding
 
@@ -13,7 +12,6 @@
 ? Add QuickFix autocommand
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted
-- Add buffer bar scrolls to active tab
 - Add expand all (one layer deep)
 - Add goto in file tree
 - Add minimal width mode for buffer bar

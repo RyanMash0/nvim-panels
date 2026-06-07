@@ -2,7 +2,6 @@ local M = {}
 local config = require('nvim-ideify.bufferbar.config')
 local state = require('nvim-ideify.bufferbar.state')
 local utils = require('nvim-ideify.bufferbar.utils')
-local g_state = require('nvim-ideify.state')
 local g_utils = require('nvim-ideify.utils')
 
 local function truncate_end(str, num)
@@ -28,24 +27,39 @@ local function extend_length(str, num)
 	return str
 end
 
+local function buffer_delete(buf)
+		local cur_buf = utils.get_cur_buf()
+		local buf_info = state.buffer_info
+		local buf_order = state.buffer_order
+		local del_info = buf_info[buf]
+		local del_pos = del_info.position
+		local new_pos = del_pos == #buf_order and del_pos - 1 or del_pos + 1
+		local new_buf = buf_order[new_pos]
+		vim.api.nvim_buf_delete(buf, {})
+		M.render()
+		local col = state.buttons_r[new_buf]
+		vim.api.nvim_win_set_cursor(state:get_window(), { 1, col })
+
+		if buf ~= cur_buf then return cur_buf end
+
+		return new_buf
+end
+
+local function buffer_switch()
+	local switch_buf = utils.get_sel_buffer()
+
+	return switch_buf
+end
+
 function M.action()
 	local win_id = state:get_window()
 	local pos = vim.api.nvim_win_get_cursor(win_id)
 	local cur_col = pos[2]
 	local button = pos[1] == 1 and state.buttons[cur_col]
+	local check_button = button and not vim.bo[button].modified
+	local buf = check_button and buffer_delete(button) or buffer_switch()
 
-	if button and not vim.bo[button].modified then
-		vim.api.nvim_buf_delete(button, {})
-		M.render()
-	end
-
-	local switch_buf = utils.get_sel_buffer()
-	if not switch_buf then return end
-
-	g_utils.check_or_make_main_win()
-	local last_win = g_utils.win_valid(g_state.wins.last) and g_state.wins.last
-
-	vim.api.nvim_win_set_buf(last_win or g_state.wins.main, switch_buf)
+	utils.set_last_win_buf(buf)
 end
 
 function M.highlight()
@@ -53,8 +67,7 @@ function M.highlight()
 	local buf_id = state:get_buffer()
 	local ns = state:get_namespace()
 	vim.api.nvim_buf_clear_namespace(buf_id, ns, 0, -1)
-	local last_win = g_utils.win_valid(g_state.wins.last) and g_state.wins.last
-	local cur_buf = vim.api.nvim_win_get_buf(last_win or g_state.wins.main)
+	local cur_buf = utils.get_cur_buf()
 	local yanked = state.yanked
 	local hl_region = state:get_buffer_info()[cur_buf]
 	local yank_hl_region = state:get_buffer_info()[yanked]
@@ -153,6 +166,7 @@ function M.render()
 		dir_str = dir_str .. ' ' .. dir_name .. ' \u{23BF}' .. interact .. '\u{23CC}'
 		file_str = file_str .. ' ' .. file_name .. '  \u{23BA}\u{23B9}'
 		state.buttons[tab_end - 2] = buf
+		state.buttons_r[buf] = tab_end - 2
 	end
 
 	state:set_buffer_info(buffer_info)
