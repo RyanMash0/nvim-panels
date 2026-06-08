@@ -134,9 +134,7 @@ function M.render()
 	local tab_start
 	local tab_end
 	local minimal = config.options.minimal
-	local l_space = minimal and '' or ' '
-	local t_space_t = minimal and '' or ' '
-	local t_space_b = minimal and ' ' or '  '
+	local padding = minimal and '' or ' '
 	for i, buf in ipairs(bufs_filtered) do
 		buf_name = vim.api.nvim_buf_get_name(buf)
 
@@ -174,8 +172,8 @@ function M.render()
 		if vim.bo[buf].modified then interact = '+'
 		else interact = 'x' end
 
-		dir_str = dir_str .. l_space .. dir_name .. t_space_t .. '\u{23BF}' .. interact .. '\u{23CC}'
-		file_str = file_str .. l_space .. file_name .. t_space_b .. '\u{23BA}\u{23B9}'
+		dir_str = dir_str .. padding .. dir_name .. padding .. '\u{23BF}' .. interact .. '\u{23CC}'
+		file_str = file_str .. padding .. file_name .. padding .. ' \u{23BA}\u{23B9}'
 		state.buttons[tab_end - 2] = buf
 		state.buttons_r[buf] = tab_end - 2
 	end
