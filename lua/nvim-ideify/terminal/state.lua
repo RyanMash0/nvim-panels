@@ -3,6 +3,8 @@ local M = {}
 M.buffer = -1
 M.window = -1
 M.win_config = {}
+M.extra_buffers = {}
+M.extra_buffers_r = {}
 
 M.namespace = vim.api.nvim_create_namespace('IDEifyTerminal')
 

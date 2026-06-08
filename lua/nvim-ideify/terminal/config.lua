@@ -1,10 +1,12 @@
 local M = {}
 
 M.defaults = {
+	base_statusline = '[Terminal]',
 	window = {
 		start_opts = {},
 		opts = {
 			number = false,
+			relativenumber = false,
 			winfixbuf = true,
 			statusline = '[Terminal]',
 		},

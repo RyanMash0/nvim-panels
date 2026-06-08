@@ -31,6 +31,7 @@ function M.buffer_next()
 
 	local cur_buf = vim.api.nvim_win_get_buf(win)
 	local cur_buf_info = state.buffer_info[cur_buf]
+	if not cur_buf_info then return end
 	local new_pos = cur_buf_info.position + 1
 	local num_bufs = #state.buffer_order
 	new_pos = new_pos <= num_bufs and new_pos or 1
@@ -54,6 +55,7 @@ function M.buffer_previous()
 
 	local cur_buf = vim.api.nvim_win_get_buf(win)
 	local cur_buf_info = state.buffer_info[cur_buf]
+	if not cur_buf_info then return end
 	local new_pos = cur_buf_info.position - 1
 	local num_bufs = #state.buffer_order
 	new_pos = new_pos >= 1 and new_pos or num_bufs
