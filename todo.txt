@@ -2,6 +2,8 @@
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
 ? Resizing tree clicks on files
+- Buffer bar minimal mode search errors
+- Tabs do not display correctly on all os
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
