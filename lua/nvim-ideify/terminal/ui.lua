@@ -20,7 +20,9 @@ function M.render()
 	end
 
 	if vim.bo[buf].buftype ~= 'terminal' then
+		vim.wo[win].winfixbuf = false
 		vim.api.nvim_buf_call(buf, function() vim.cmd.terminal() end)
+		vim.wo[win].winfixbuf = true
 	end
 
 	local extra_buffers = state.extra_buffers

@@ -1,6 +1,11 @@
 local M = {}
 
 local state = require('nvim-ideify.bufferbar.state')
+local config = require('nvim-ideify.bufferbar.config')
+
+function M.string_to_reg(str)
+	return str:gsub('([\\\\%.%*%^%$%[%]])', '\\%1')
+end
 
 function M.get_sel_buffer()
 	local win = state:get_window()
@@ -59,34 +64,50 @@ function M.generate_buf_scroll(back)
 		local flags = 'W' .. back
 		local win = state:get_window()
 		local line = vim.api.nvim_win_get_cursor(win)[1]
+		local minimal = config.options.minimal
+		local new_pos
+		local edge_pos
+		local og_close = config.options.close
+		local close = config.options.close_reg
+		local mod = config.options.modified_reg
+		local min_pad_pre = config.options.min_pad_pre_reg
+		local pad_pre = config.options.pad_pre_reg
+		local sep = config.options.separator_reg
+		local button_pos = #og_close - config.options.button_pos
+		local button_break = M.string_to_reg(og_close:sub(1,button_pos)):len()
+		local close_expr = close:sub(1, button_break) .. [[\zs]] .. close:sub(button_break + 1)
+		local mod_expr = mod:sub(1, button_break) .. [[\zs]] .. mod:sub(button_break + 1)
+		local pre_pad_group = [[\(]] .. pad_pre .. [[\|]] .. min_pad_pre .. [[\)]]
+		local button_reg = [[\(]] .. close_expr .. [[\|]] .. mod_expr .. [[\)]]
+		local tab_start_reg = [[\(^]] .. pre_pad_group .. [[\zs.\|]] .. sep .. pre_pad_group .. [[\zs.\)]]
 
 		if line == 1 and b then
-			local new_pos = vim.fn.searchpos([[⎿\zs.⏌]], flags, line)
+			new_pos = vim.fn.searchpos(button_reg, flags, line)
 			if new_pos[1] ~= 1 then return end
-			local edge_pos = vim.fn.searchpos([[\(^ \zs.\|⏌ \zs.\)]], flags, line)
+			edge_pos = vim.fn.searchpos(tab_start_reg, flags, line)
 
 			edge_pos[2] = edge_pos[2] - 1
 			new_pos[2] = new_pos[2] - 1
 			vim.api.nvim_win_set_cursor(win, edge_pos)
 			vim.api.nvim_win_set_cursor(win, new_pos)
 		elseif line == 1 and not b then
-			local new_pos = vim.fn.searchpos([[⎿\zs.⏌]], flags, line)
+			new_pos = vim.fn.searchpos(button_reg, flags, line)
 			if new_pos[1] ~= 1 then return end
 
 			new_pos[2] = new_pos[2] - 1
 			vim.api.nvim_win_set_cursor(win, { new_pos[1], new_pos[2] + 1 })
 			vim.api.nvim_win_set_cursor(win, new_pos)
 		elseif line == 2 and b then
-			local new_pos = vim.fn.searchpos([[\(^ \zs.\|⎹ \zs.\)]], flags, line)
+			new_pos = vim.fn.searchpos(tab_start_reg, flags, line)
 			if new_pos[1] ~= 2 then return end
 
 			new_pos[2] = new_pos[2] - 1
-			vim.api.nvim_win_set_cursor(win, { new_pos[1], new_pos[2] - 1 })
+			vim.api.nvim_win_set_cursor(win, { new_pos[1], new_pos[2] - (minimal and #min_pad_pre or #pad_pre) })
 			vim.api.nvim_win_set_cursor(win, new_pos)
 		elseif line == 2 and not b then
-			local new_pos = vim.fn.searchpos([[\(^ \zs.\|⎹ \zs.\)]], flags, line)
+			new_pos = vim.fn.searchpos(tab_start_reg, flags, line)
 			if new_pos[1] ~= 2 then return end
-			local edge_pos = vim.fn.searchpos([[⎹]], flags, line)
+			edge_pos = vim.fn.searchpos(sep, flags, line)
 
 			edge_pos[2] = edge_pos[2] - 1
 			new_pos[2] = new_pos[2] - 1

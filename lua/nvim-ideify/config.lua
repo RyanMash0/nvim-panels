@@ -14,7 +14,7 @@ M.defaults = {
 			module = function ()
 				return nil
 			end,
-			width = 0,
+			width = 50,
 			hidden = false,
 		},
 		top = {

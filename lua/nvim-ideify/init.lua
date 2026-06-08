@@ -43,28 +43,11 @@ function M.panel_swap(direction1, direction2)
 	local panel_confs = config.options.layout
 	if not panel_confs[direction1] or not panel_confs[direction2] then return end
 
-	local tmp_direction1 = panel_confs[direction1]
-	local tmp_direction2 = panel_confs[direction2]
+	local tmp_module1 = panel_confs[direction1].module
+	local tmp_module2 = panel_confs[direction2].module
 
-	local function swap_size_params(width_direction, height_direction)
-		local tmp_width = width_direction.width
-		local tmp_height = height_direction.height
-
-		width_direction.width = nil
-		width_direction.height = tmp_width
-
-		height_direction.height = nil
-		height_direction.width = tmp_height
-	end
-
-	if tmp_direction1.width and not tmp_direction2.width then
-		swap_size_params(tmp_direction1, tmp_direction2)
-	elseif tmp_direction2.width and not tmp_direction1.width then
-		swap_size_params(tmp_direction2, tmp_direction1)
-	end
-
-	panel_confs[direction1] = tmp_direction2
-	panel_confs[direction2] = tmp_direction1
+	panel_confs[direction1].module = tmp_module2
+	panel_confs[direction2].module = tmp_module1
 
 	local active = state.active
 
@@ -112,7 +95,7 @@ vim.api.nvim_create_autocmd('TextChanged', {
 		local buf
 		for _, module in pairs(modules) do
 			mod_win = module:get_state():get_window()
-			mod_win = mod_win > -1 and mod_win or 0
+			mod_win = utils.win_valid(mod_win) and mod_win or 0
 			buf = vim.api.nvim_win_get_buf(mod_win)
 			if win == mod_win and vim.bo[buf].filetype == 'netrw' then
 				ui.module_buf_reload(module)

@@ -69,11 +69,11 @@ vim.api.nvim_create_autocmd('BufEnter', {
 	group = 'IDEifyBufferBar',
 	callback = function(args)
 		local state = require('nvim-ideify.bufferbar.state')
-		-- local g_utils = require('nvim-ideify.')
+		local g_utils = require('nvim-ideify.utils')
 		local buf_info = state.buffer_info[args.buf]
 
 		vim.defer_fn(function()
-			if buf_info and buf_info.first and state:get_window() > 0 then
+			if buf_info and buf_info.first and g_utils.win_valid(state:get_window()) then
 				vim.api.nvim_win_set_cursor(state:get_window(), { 2, buf_info.last})
 				vim.api.nvim_win_set_cursor(state:get_window(), { 2, buf_info.first})
 				vim.api.nvim_win_set_cursor(state:get_window(), { 2, buf_info.first + 1})

@@ -74,30 +74,41 @@ function M.highlight()
 	local yank_hl_region = state:get_buffer_info()[yanked]
 	local hl_group = vim.api.nvim_get_hl_id_by_name('TabLineSel')
 	local yank_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarYank')
+	local close_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarClose')
+	local modified_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarModified')
 	-- local hl_group_bold = vim.api.nvim_get_hl_id_by_name('markdownBold')
 	if not hl_region or hl_region == vim.NIL then return end
+	local button_len = #config.options.close
+
+	for tab_buf, info in pairs(state.buffer_info) do
+		vim.api.nvim_buf_set_extmark(buf_id, ns, 0, info.last - button_len, {
+			end_col = info.last,
+			hl_group = vim.bo[tab_buf].modified and modified_hl_group or close_hl_group,
+		})
+	end
 
 	if cur_buf ~= yanked then
 		vim.api.nvim_buf_set_extmark(buf_id, ns, 0, hl_region.first, {
+			-- end_col = hl_region.last - button_len,
 			end_col = hl_region.last,
-			hl_group = hl_group
+			hl_group = hl_group,
 		})
 
 		vim.api.nvim_buf_set_extmark(buf_id, ns, 1, hl_region.first, {
 			end_col = hl_region.last,
-			hl_group = hl_group
+			hl_group = hl_group,
 		})
 	end
 
 	if yank_hl_region then
 		vim.api.nvim_buf_set_extmark(buf_id, ns, 0, yank_hl_region.first, {
 			end_col = yank_hl_region.last,
-			hl_group = yank_hl_group
+			hl_group = yank_hl_group,
 		})
 
 		vim.api.nvim_buf_set_extmark(buf_id, ns, 1, yank_hl_region.first, {
 			end_col = yank_hl_region.last,
-			hl_group = yank_hl_group
+			hl_group = yank_hl_group,
 		})
 	end
 end
@@ -134,7 +145,19 @@ function M.render()
 	local tab_start
 	local tab_end
 	local minimal = config.options.minimal
-	local padding = minimal and '' or ' '
+	local normal_pad_pre = config.options.pad_pre
+	local min_pad_pre = config.options.min_pad_pre
+	local pad_pre = minimal and min_pad_pre or normal_pad_pre
+	local normal_pad_post = config.options.pad_post
+	local min_pad_post = config.options.min_pad_post
+	local pad_post = minimal and min_pad_post or normal_pad_post
+	local sep = config.options.separator
+	local close = config.options.close
+	local modified = config.options.modified
+	local button_bot = config.options.below_button
+	local button_pos = config.options.button_pos
+	local extra_len = string.len(pad_pre .. pad_post .. close)
+
 	for i, buf in ipairs(bufs_filtered) do
 		buf_name = vim.api.nvim_buf_get_name(buf)
 
@@ -159,25 +182,20 @@ function M.render()
 		dir_name = extend_length(dir_name, max_len)
 
 		tab_start = #file_str
-		tab_end = tab_start + max_len + 7
+		tab_end = tab_start + max_len + extra_len
 
 		buffer_info[buf] = { first = tab_start, last = tab_end, position = i }
-		-- vim.print(buffer_info[buf])
-		-- if vim.bo[buf].modified then interact = '\u{25CF}'
-		-- else interact = '\u{2A2F}' end
-		-- circle: '\u{2981}'
-		-- circle: '\u{25CF}'
-		-- x: '\u{2A2F}' 
 
-		if vim.bo[buf].modified then interact = '+'
-		else interact = 'x' end
+		if vim.bo[buf].modified then interact = modified
+		else interact = close end
 
-		dir_str = dir_str .. padding .. dir_name .. padding .. '\u{23BF}' .. interact .. '\u{23CC}'
-		file_str = file_str .. padding .. file_name .. padding .. ' \u{23BA}\u{23B9}'
-		state.buttons[tab_end - 2] = buf
-		state.buttons_r[buf] = tab_end - 2
+		dir_str = dir_str .. pad_pre .. dir_name .. pad_post .. interact .. sep
+		file_str = file_str .. pad_pre .. file_name .. pad_post .. button_bot .. sep
+		state.buttons[tab_end - button_pos] = buf
+		state.buttons_r[buf] = tab_end - button_pos
 	end
 
+	-- vim.print(buffer_info)
 	state:set_buffer_info(buffer_info)
 	vim.bo[buf_id].modifiable = true
 	vim.api.nvim_buf_set_lines(buf_id, 0, -1, true, {dir_str, file_str})

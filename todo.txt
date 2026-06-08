@@ -2,16 +2,14 @@
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
 ? Resizing tree clicks on files
-- Buffer bar minimal mode search errors
-- Tabs do not display correctly on all os
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
 -------------------------------------------------------------------------------
 ? Add QuickFix autocommand
+? Add goto in file tree
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted by making single "eternal" buffer
-- Add goto in file tree
 - Add type annotations
 - Add documentation
 - Add health
