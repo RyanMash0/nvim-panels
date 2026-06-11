@@ -78,7 +78,7 @@ function M.highlight()
 	local modified_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarModified')
 	-- local hl_group_bold = vim.api.nvim_get_hl_id_by_name('markdownBold')
 	if not hl_region or hl_region == vim.NIL then return end
-	local button_len = #config.options.close
+	local button_len = #config.options.styling.button.close
 
 	for tab_buf, info in pairs(state.buffer_info) do
 		vim.api.nvim_buf_set_extmark(buf_id, ns, 0, info.last - button_len, {
@@ -119,16 +119,11 @@ function M.render()
 	if not state.buffer_order then state.buffer_order = vim.api.nvim_list_bufs() end
 	local buffers = state.buffer_order
 	local bufs_filtered = {}
-	-- local term_buffers = {}
 	state.buttons = {}
 	for _, buf in ipairs(buffers) do
 		if vim.bo[buf].buflisted then
 			table.insert(bufs_filtered, buf)
 		end
-		--
-		-- if vim.bo[buf].buftype == 'terminal' then
-		-- 	table.insert(term_buffers, buf)
-		-- end
 	end
 
 	local buffer_info = {}
@@ -145,17 +140,17 @@ function M.render()
 	local tab_start
 	local tab_end
 	local minimal = config.options.minimal
-	local normal_pad_pre = config.options.pad_pre
-	local min_pad_pre = config.options.min_pad_pre
+	local normal_pad_pre = config.options.styling.padding.normal.before
+	local min_pad_pre = config.options.styling.padding.minimal.before
 	local pad_pre = minimal and min_pad_pre or normal_pad_pre
-	local normal_pad_post = config.options.pad_post
-	local min_pad_post = config.options.min_pad_post
+	local normal_pad_post = config.options.styling.padding.normal.after
+	local min_pad_post = config.options.styling.padding.minimal.after
 	local pad_post = minimal and min_pad_post or normal_pad_post
-	local sep = config.options.separator
-	local close = config.options.close
-	local modified = config.options.modified
-	local button_bot = config.options.below_button
-	local button_pos = config.options.button_pos
+	local sep = config.options.styling.separator
+	local close = config.options.styling.button.close
+	local modified = config.options.styling.button.modified
+	local button_bot = config.options.styling.button.below
+	local button_pos = config.options.styling.button.pos
 	local extra_len = string.len(pad_pre .. pad_post .. close)
 
 	for i, buf in ipairs(bufs_filtered) do

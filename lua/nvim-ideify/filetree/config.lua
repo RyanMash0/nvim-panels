@@ -18,10 +18,13 @@ M.defaults = {
 		' ╎ [m]ark [s]ource (ms),     ╎',
 		' ╎ [<Esc>] to cancel mark,   ╎',
 		' ╎                           ╎',
+		' ╎ [G]o to directory,        ╎',
+		' ╎                           ╎',
 		' ╎ [r]efresh,                ╎',
 		' ╎ [e]xpand [t]arget (et),   ╎',
 		' ╎ [c]ollapse [t]arget (ct), ╎',
 		' ╎ [c]ollpase [a]ll (ca),    ╎',
+		' ╎                           ╎',
 		' ╎ [t]oggle this menu        ╎',
 		' └╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┘',
 	},
@@ -46,7 +49,7 @@ M.defaults = {
 M.options = vim.deepcopy(M.defaults)
 
 function M.setup(opts)
-	vim.defer_fn(function()
+	vim.schedule(function()
 		local target_hl_pre = vim.api.nvim_get_hl(0, { name = 'Green' })
 		local source_hl_pre = vim.api.nvim_get_hl(0, { name = 'Grey' })
 		local target_hl = {}
@@ -64,7 +67,7 @@ function M.setup(opts)
 
 		vim.api.nvim_set_hl(0, 'IDEifyTreeTarget', target_hl)
 		vim.api.nvim_set_hl(0, 'IDEifyTreeSource', source_hl)
-	end, 3000)
+	end)
 
 	M.options = vim.tbl_deep_extend('force', M.defaults, opts or {})
 end

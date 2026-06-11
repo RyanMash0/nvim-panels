@@ -67,13 +67,13 @@ function M.generate_buf_scroll(back)
 		local minimal = config.options.minimal
 		local new_pos
 		local edge_pos
-		local og_close = config.options.close
-		local close = config.options.close_reg
-		local mod = config.options.modified_reg
-		local min_pad_pre = config.options.min_pad_pre_reg
-		local pad_pre = config.options.pad_pre_reg
-		local sep = config.options.separator_reg
-		local button_pos = #og_close - config.options.button_pos
+		local og_close = config.options.styling.button.close
+		local close = config.options.regex.close
+		local mod = config.options.regex.modified
+		local min_pad_pre = config.options.regex.min_pad_pre
+		local pad_pre = config.options.regex.pad_pre
+		local sep = config.options.regex.separator
+		local button_pos = #og_close - config.options.styling.button.pos
 		local button_break = M.string_to_reg(og_close:sub(1,button_pos)):len()
 		local close_expr = close:sub(1, button_break) .. [[\zs]] .. close:sub(button_break + 1)
 		local mod_expr = mod:sub(1, button_break) .. [[\zs]] .. mod:sub(button_break + 1)

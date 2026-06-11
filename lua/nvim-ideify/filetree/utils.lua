@@ -3,6 +3,21 @@ local M = {}
 local state = require('nvim-ideify.filetree.state')
 local config = require('nvim-ideify.filetree.config')
 
+function M.go_to_dir()
+	local ui = require('nvim-ideify.filetree.ui')
+	vim.ui.input({
+		prompt = "Path: ",
+		completion = 'file',
+	}, function(input)
+		if vim.fn.isdirectory(input) ~= 1 then
+			vim.notify('Invalid Directory', vim.log.levels.ERROR)
+			return
+		end
+		local path = vim.fs.abspath(input)
+		ui.change_dir(path)
+	end)
+end
+
 function M.unmark_subdirectories(path)
 	local sources = state.fs_sources
 	local target, _ = next(state.fs_target)
@@ -158,10 +173,6 @@ function M.fs_delete()
 	vim.ui.input(
 		{
 			prompt = 'Confirm ' .. recur .. 'deletion of <' .. relpath .. '> ([Y]es, [n]o): ',
-			highlight = function()
-				vim.print({ { 0, 5, red } })
-				return { { 0, 5, red } }
-			end,
 		},
 		function(input)
 			if input == nil then input = 'n'
@@ -169,7 +180,7 @@ function M.fs_delete()
 			else input = input:sub(1, 1):lower() end
 
 			if input ~= 'y' and input ~= 'n' then
-				print('Invalid input')
+				vim.notify('Invalid input', vim.log.levels.ERROR)
 				return
 			end
 
@@ -180,7 +191,7 @@ function M.fs_delete()
 				local esc = vim.keycode('<Esc>')
 				vim.api.nvim_feedkeys(esc, 'n', false)
 				ui.render()
-				vim.print('Item successfully moved to ~/.local/share/Trash/nvim-ideify')
+				vim.notify('Item successfully moved to ~/.local/share/Trash/nvim-ideify', vim.log.levels.INFO)
 			end
 		end
 	)
@@ -227,7 +238,7 @@ function M.fs_delete_visual()
 				else input = input:sub(1, 1):lower() end
 
 				if input ~= 'y' and input ~= 'n' and input ~= 'a' then
-					print('Invalid input')
+					vim.notify('Invalid input', vim.log.levels.ERROR)
 					return
 				end
 
@@ -245,7 +256,7 @@ function M.fs_delete_visual()
 	local esc = vim.keycode('<Esc>')
 	vim.api.nvim_feedkeys(esc, 'n', false)
 	ui.render()
-	vim.print('Item(s) successfully moved to ~/.local/share/Trash/nvim-ideify')
+	vim.notify('Item successfully moved to ~/.local/share/Trash/nvim-ideify', vim.log.levels.INFO)
 end
 
 function M.mark_target()

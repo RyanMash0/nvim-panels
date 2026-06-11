@@ -1,13 +1,11 @@
 -------------------------------------------------------------------------------
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
-? Resizing tree clicks on files
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
 -------------------------------------------------------------------------------
 ? Add QuickFix autocommand
-? Add goto in file tree
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted by making single "eternal" buffer
 - Add type annotations
@@ -17,3 +15,13 @@
 -------------------------------------------------------------------------------
 -- Refactor                                                                  --
 -------------------------------------------------------------------------------
+- Rewrite printing to use more efficient concat from lua (strings are
+  immutable)
+- Add debounce for buffer bar render
+- Investigate vim.uv for filesystem operations
+- Make state encapsulation consistent
+- Make a more generic registration system for submodules
+- Enforce separation of state tables and printed lines in file tree and buffer
+  bar
+- Register highlight groups on ColorScheme event
+- Add constants file
