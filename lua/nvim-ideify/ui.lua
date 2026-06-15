@@ -142,6 +142,7 @@ local function close_wins()
 	local win_config
 
 	vim.api.nvim_set_current_win(state.wins.main)
+	utils.check_or_make_main_win()
 
 	for _, win in ipairs(wins) do
 		win_config = vim.api.nvim_win_get_config(win)
@@ -245,10 +246,10 @@ local function open_panel(position)
 	local mod_state = module.get_state()
 	local mod_ui = module.get_ui()
 
-	local buf_conf = mod_constants.config.buffer
+	local buf_conf = vim.deepcopy(mod_constants.config.buffer)
 
 	local pos = constants.position
-	local win_conf = module.get_constants().config.window
+	local win_conf = vim.deepcopy(mod_constants.config.window)
 	win_conf.split = utils.position_to_split(position)
 	if position == pos.LEFT or position == pos.RIGHT then
 		win_conf.vertical = true
@@ -380,7 +381,7 @@ function M.module_buf_reload(module)
 	local mod_state = module.get_state()
 	local mod_ui = module.get_ui()
 
-	local buf_conf = mod_constants.config.buffer
+	local buf_conf = vim.deepcopy(mod_constants.config.buffer)
 	local buf = vim.api.nvim_create_buf(buf_conf.listed, buf_conf.scratch)
 	local win = mod_state.get_window()
 	local buf_old = vim.api.nvim_win_get_buf(win)
@@ -430,9 +431,9 @@ local function panel_size_reset(position)
 	end
 	mod_state.set_win_config(win_conf)
 
+	vim.api.nvim_win_set_config(mod_win, win_conf)
 	utils.check_or_make_main_win()
 	vim.api.nvim_set_current_win(state.wins.main)
-	vim.api.nvim_win_set_config(mod_win, win_conf)
 end
 
 function M.reset()

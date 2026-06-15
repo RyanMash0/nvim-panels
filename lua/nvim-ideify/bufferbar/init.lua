@@ -83,7 +83,6 @@ vim.api.nvim_create_autocmd('BufEnter', {
 				vim.api.nvim_win_set_cursor(win, { 2, buf_entry.last})
 				vim.api.nvim_win_set_cursor(win, { 2, buf_entry.first})
 				vim.api.nvim_win_set_cursor(win, { 1, buf_entry.first + 1})
-				vim.api.nvim_win_set_cursor(win, { 2, buf_entry.first + 1})
 			end
 
 			ui.render()

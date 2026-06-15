@@ -297,6 +297,7 @@ function M.check_or_make_main_win()
 	end
 
 	local win_config
+	local win_buf
 
 	if l_win_exists then check_wins[l_win_id] = nil end
 	if r_win_exists then check_wins[r_win_id] = nil end
@@ -305,7 +306,10 @@ function M.check_or_make_main_win()
 
 	for win, _ in pairs(check_wins) do
 		win_config = vim.api.nvim_win_get_config(win)
+		win_buf = vim.api.nvim_win_get_buf(win)
 		if not win_config.focusable or win_config.relative ~= '' then
+			check_wins[win] = nil
+		elseif win_buf >= 2 and win_buf <= 5 then
 			check_wins[win] = nil
 		end
 	end
