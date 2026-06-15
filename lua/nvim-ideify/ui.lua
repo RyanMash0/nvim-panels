@@ -124,7 +124,7 @@ local function parse_layout()
 	local l_vis = left.module() and not left.hidden
 	local r_vis = right.module() and not right.hidden
 	local t_vis = top.module() and not top.hidden
-	local b_vis = top.module() and not top.hidden
+	local b_vis = bottom.module() and not bottom.hidden
 
 	local l_width = l_vis and left.width or 0
 	local r_width = r_vis and right.width or 0

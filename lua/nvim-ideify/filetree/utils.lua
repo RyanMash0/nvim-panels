@@ -34,15 +34,18 @@ function M.unmark_subdirectories(path)
 	end
 end
 
-function M.get_path_array(text, path)
+function M.get_path_array(text, path, incl_base)
 	local win_id = state.get_window()
 	local win_conf = vim.api.nvim_win_get_config(win_id)
 	local size = win_conf.width or win_conf.height
-	local spaces = g_utils.repeat_str(' ', #text)
+	local spaces = '    '
+	--local spaces = g_utils.repeat_str(' ', #text)
 
 	local path_item_array = {}
-	for item in string.gmatch(path, '[^/]+/') do
-		table.insert(path_item_array, item)
+	for parent in vim.fs.parents(path) do
+		parent = vim.fs.basename(parent) .. '/'
+		if parent == './' and not incl_base then break end
+		table.insert(path_item_array, 1, parent)
 	end
 
 	local path_array_tables = { { text }, }
@@ -73,11 +76,7 @@ function M.get_target_array()
 
 	target = vim.fs.relpath(cwd, target) .. '/'
 
-	if target ~= './' then
-		target = './' .. target
-	end
-
-	return M.get_path_array(' Target: ', target)
+	return M.get_path_array(' Target: ', target, true)
 end
 
 function M.get_cwd_array()
@@ -86,9 +85,8 @@ function M.get_cwd_array()
 	if home_dir then
 		path = path:gsub(home_dir, '~')
 	end
-	path = path .. '/'
 
-	return M.get_path_array(' CWD: ', path)
+	return M.get_path_array(' Working Dir: ', path, false)
 end
 
 function M.get_default_header()
@@ -97,14 +95,14 @@ function M.get_default_header()
 	local size = win_conf.width or win_conf.height
 	local border = g_utils.repeat_str('=', size)
 	local title_line = ' File Tree'
-	local path_array = M.get_cwd_array()
+	local cwd_array = M.get_cwd_array()
 	local target_array = M.get_target_array()
 	local header = {}
 
 	table.insert(header, border)
 	table.insert(header, title_line)
 
-	for _, item in ipairs(path_array) do
+	for _, item in ipairs(cwd_array) do
 		table.insert(header, item)
 	end
 

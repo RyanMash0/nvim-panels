@@ -5,32 +5,32 @@ local constants = require('nvim-ideify.constants')
 M.defaults = {
 	layout = {
 		left = {
-			module = function ()
+			module = function()
 				return require('nvim-ideify.filetree')
 			end,
 			width = 30,
 			hidden = false,
 		},
 		right = {
-			module = function ()
+			module = function()
 				return nil
 			end,
 			width = 50,
 			hidden = false,
 		},
 		top = {
-			module = function ()
+			module = function()
 				return require('nvim-ideify.bufferbar')
 			end,
 			height = 2,
-			hidden = false
+			hidden = false,
 		},
 		bottom = {
-			module = function ()
+			module = function()
 				return require('nvim-ideify.terminal')
 			end,
 			height = 10,
-			hidden = false
+			hidden = false,
 		},
 	},
 	split_order = {

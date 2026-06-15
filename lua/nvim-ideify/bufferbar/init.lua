@@ -109,7 +109,7 @@ vim.api.nvim_create_autocmd({'BufAdd', 'BufNew'}, {
 	end,
 })
 
-vim.api.nvim_create_autocmd({'BufDelete'}, {
+vim.api.nvim_create_autocmd('BufDelete', {
 	group = 'IDEifyBufferBar',
 	callback = function(args)
 		local state = M.get_state()
@@ -123,6 +123,14 @@ vim.api.nvim_create_autocmd({'BufDelete'}, {
 		state.remove_buffer(position)
 		vim.schedule(ui.render)
 	end,
+})
+
+vim.api.nvim_create_autocmd('ColorScheme', {
+	group = 'IDEifyBufferBar',
+	callback = function()
+		local config = M.get_config()
+		config.add_highlights()
+	end
 })
 
 return M

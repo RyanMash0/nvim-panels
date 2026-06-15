@@ -95,6 +95,15 @@ vim.api.nvim_create_autocmd('WinEnter', {
 	end,
 })
 
+-- vim.api.nvim_create_autocmd('BufWinEnter', {
+-- 	group = 'IDEify',
+-- 	pattern = 'quickfix',
+-- 	callback = function(args)
+-- 		vim.print(args)
+-- 		-- vim.schedule(ui.reset)
+-- 	end,
+-- })
+
 vim.api.nvim_create_autocmd('TextChanged', {
 	group = 'IDEify',
 	callback = function()

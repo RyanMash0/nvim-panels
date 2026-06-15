@@ -8,6 +8,7 @@ local on_click = nil
 local header_height = 0
 local line_to_entry = {}
 local path_to_line = {}
+local line_to_text = {}
 local fs_expanded = {}
 local fs_target = {}
 local fs_sources = {}
@@ -60,14 +61,32 @@ function M.get_entry_by_path(path)
 	return line_to_entry[path_to_line[path or ''] or -1]
 end
 
-function M.insert_tree_entry(entry, line)
-	if not entry then return end
+function M.get_text_by_line(line)
+	return line_to_text[line]
+end
+
+function M.set_text_by_line(text, line)
+	line_to_text[line] = text
+end
+
+function M.get_text()
+	return line_to_text
+end
+
+function M.clear_text()
+	line_to_text = {}
+end
+
+function M.insert_tree_entry(entry, text, line)
+	if not entry or not text then return end
 
 	if not line then
 		table.insert(line_to_entry, entry)
+		table.insert(line_to_text, text)
 		path_to_line[entry.path] = #line_to_entry
 	else
 		table.insert(line_to_entry, line, entry)
+		table.insert(line_to_text, line, text)
 		path_to_line[entry.path] = line
 	end
 end
@@ -77,6 +96,7 @@ function M.remove_tree_entry(line)
 
 	local path = line_to_entry[line].path
 	table.remove(line_to_entry, line)
+	table.remove(line_to_text, line)
 	path_to_line[path] = nil
 end
 

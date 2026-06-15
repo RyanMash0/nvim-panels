@@ -32,21 +32,21 @@ local function extend_length(str, num)
 end
 
 local function buffer_delete(buf)
-		local cur_buf = g_utils.get_last_win_buf()
-		local del_entry = state.get_entry_by_buf(buf)
-		local del_pos = del_entry.position
-		local is_last_buf = del_pos == state.get_num_bufs()
-		local new_pos = is_last_buf and del_pos - 1 or del_pos + 1
-		local new_buf = state.get_buf_by_pos(new_pos)
-		if not g_utils.buf_valid(new_buf) then new_buf = 0 end
-		vim.api.nvim_buf_delete(buf, {})
-		M.render()
-		local col = state.get_button_by_buf(new_buf)
-		vim.api.nvim_win_set_cursor(state.get_window(), col and { 1, col } or { 2, 1 })
+	local cur_buf = g_utils.get_last_win_buf()
+	local del_entry = state.get_entry_by_buf(buf)
+	local del_pos = del_entry.position
+	local is_last_buf = del_pos == state.get_num_bufs()
+	local new_pos = is_last_buf and del_pos - 1 or del_pos + 1
+	local new_buf = state.get_buf_by_pos(new_pos)
+	if not g_utils.buf_valid(new_buf) then new_buf = 0 end
+	vim.api.nvim_buf_delete(buf, {})
+	M.render()
+	local col = state.get_button_by_buf(new_buf)
+	vim.api.nvim_win_set_cursor(state.get_window(), col and { 1, col } or { 2, 1 })
 
-		if buf ~= cur_buf then return cur_buf end
+	if buf ~= cur_buf then return cur_buf end
 
-		return new_buf
+	return new_buf
 end
 
 local function buffer_switch()

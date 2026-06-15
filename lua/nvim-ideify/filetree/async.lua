@@ -113,7 +113,7 @@ function M.await_copy_multi(files)
 	for _, file in ipairs(files) do
 		count.increment()
 		vim.uv.fs_copyfile(file[1], file[2], {}, function(err, success)
-			if not err or not success then
+			if err or not success then
 				err_log.add_data({ err = err, success = success, path = file[1] })
 			end
 			count.decrement()
@@ -149,13 +149,13 @@ end
 
 function M.await_create_file(path)
 	local co = coroutine.running()
-	vim.uv.fs_open(path, 'wx', tonumber('666', 8), function(open_err, _)
-		if open_err then
+	vim.uv.fs_open(path, 'wx', tonumber('666', 8), function(open_err, fd)
+		if open_err or not fd then
 			vim.schedule(function() coroutine.resume(co, open_err, false) end)
 			return
 		end
 
-		vim.uv.fs_close(path, function(close_err, success)
+		vim.uv.fs_close(fd, function(close_err, success)
 			vim.schedule(function() coroutine.resume(co, close_err, success) end)
 		end)
 	end)
