@@ -117,10 +117,19 @@ local function parse_layout()
 	M.windows = {}
 
 	if win_tree == root_leaf then return end
-	local l_width = config.options.layout.left.width
-	local r_width = config.options.layout.right.width
-	local t_height = config.options.layout.top.height
-	local b_height = config.options.layout.bottom.height
+	local left = config.options.layout.left
+	local right = config.options.layout.right
+	local top = config.options.layout.top
+	local bottom = config.options.layout.bottom
+	local l_vis = left.module() and not left.hidden
+	local r_vis = right.module() and not right.hidden
+	local t_vis = top.module() and not top.hidden
+	local b_vis = top.module() and not top.hidden
+
+	local l_width = l_vis and left.width or 0
+	local r_width = r_vis and right.width or 0
+	local t_height = t_vis and top.height or 0
+	local b_height = b_vis and bottom.height or 0
 
 	local width_reduction = l_width + r_width
 	local height_reduction = t_height + b_height
