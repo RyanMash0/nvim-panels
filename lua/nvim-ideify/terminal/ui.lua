@@ -4,6 +4,7 @@ local config = require('nvim-ideify.terminal.config')
 local constants = require('nvim-ideify.terminal.constants')
 local g_utils = require('nvim-ideify.utils')
 local g_ui = require('nvim-ideify.ui')
+local shell = vim.opt.shell:get()
 
 function M.render()
 	-- vim.api.nvim_open_term(term_buf, {})
@@ -19,7 +20,7 @@ function M.render()
 	if vim.bo[buf_id].buftype ~= 'terminal' then
 		vim.wo[win_id].winfixbuf = false
 		vim.api.nvim_buf_call(buf_id, function()
-			vim.fn.jobstart({ 'bash' }, { term = true })
+			vim.fn.jobstart({ shell }, { term = true })
 		end)
 		vim.wo[win_id].winfixbuf = true
 	end
@@ -29,7 +30,7 @@ function M.render()
 	for _, buf in state.buf_iterator(2) do
 		if vim.bo[buf].buftype ~= 'terminal' then
 			vim.api.nvim_buf_call(buf, function()
-				vim.fn.jobstart({ 'bash' }, { term = true })
+				vim.fn.jobstart({ shell }, { term = true })
 			end)
 		end
 		vim.bo[buf].buflisted = false
