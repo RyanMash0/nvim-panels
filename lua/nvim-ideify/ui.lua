@@ -419,7 +419,16 @@ local function panel_size_reset(position)
 		return
 	end
 
+	local pos = constants.position
 	local win_conf = mod_state.get_win_config()
+	win_conf.split = utils.position_to_split(position)
+	if position == pos.LEFT or position == pos.RIGHT then
+		win_conf.vertical = true
+		win_conf.width = panel.width
+	else
+		win_conf.height = panel.height
+	end
+	mod_state.set_win_config(win_conf)
 
 	utils.check_or_make_main_win()
 	vim.api.nvim_set_current_win(state.wins.main)

@@ -38,16 +38,16 @@ function M.panel_toggle(direction)
 	if state.active then ui.open() end
 end
 
-function M.panel_swap(direction1, direction2)
+function M.panel_swap(position1, position2)
 	local state = require('nvim-ideify.state')
 	local panel_confs = config.options.layout
-	if not panel_confs[direction1] or not panel_confs[direction2] then return end
+	if not panel_confs[position1] or not panel_confs[position2] then return end
 
-	local tmp_module1 = panel_confs[direction1].module
-	local tmp_module2 = panel_confs[direction2].module
+	local tmp_module1 = panel_confs[position1].module
+	local tmp_module2 = panel_confs[position2].module
 
-	panel_confs[direction1].module = tmp_module2
-	panel_confs[direction2].module = tmp_module1
+	panel_confs[position1].module = tmp_module2
+	panel_confs[position2].module = tmp_module1
 
 	local active = state.active
 
@@ -55,12 +55,12 @@ function M.panel_swap(direction1, direction2)
 	if active then ui.open() end
 end
 
-function M.panel_resize(direction, size)
+function M.panel_resize(position, size)
 	local panel_confs = config.options.layout
-	if not panel_confs[direction] then return end
+	if not panel_confs[position] then return end
 
-	if panel_confs[direction].width then panel_confs[direction].width = size
-	elseif panel_confs[direction].height then panel_confs[direction].height = size end
+	if panel_confs[position].width then panel_confs[position].width = size
+	elseif panel_confs[position].height then panel_confs[position].height = size end
 
 	ui.reset()
 end

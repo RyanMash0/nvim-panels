@@ -5,7 +5,7 @@
 - File tree needs to check if buf unlisted/previously closed buffers will
   not reopen
 - Splitting windows vertically evenly does not preserve size
-- grn across multiple buffers sometimes causes errors with the buffer bar
+? grn across multiple buffers sometimes causes errors with the buffer bar
 - add last win does not set on new ui2 windows
 - terminal buffer becomes listed
 - buffer will open in quickfix window
