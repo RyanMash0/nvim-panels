@@ -1,6 +1,15 @@
 local M = {}
 
 M.defaults = {
+	window = {
+		wrap = false,
+		winfixbuf = true,
+		statusline = '[Buffers]',
+	},
+	buffer = {
+		modifiable = false,
+		buflisted = false,
+	},
 	name_pref_length = 20,
 	minimal = false,
 	styling = {
@@ -20,24 +29,6 @@ M.defaults = {
 				before = '',
 				after = '',
 			}
-		},
-	},
-	window = {
-		start_opts = {
-			style = 'minimal'
-		},
-		opts = {
-			wrap = false,
-			winfixbuf = true,
-			statusline = '[Buffers]',
-		},
-	},
-	buffer = {
-		listed = false,
-		scratch = true,
-		opts = {
-			modifiable = false,
-			buflisted = false,
 		},
 	},
 }

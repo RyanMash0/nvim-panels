@@ -1,6 +1,14 @@
 -------------------------------------------------------------------------------
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
+- Buffer bar highlighting goes away
+- File tree needs to check if buf unlisted/previously closed buffers will
+  not reopen
+- Splitting windows vertically evenly does not preserve size
+- grn across multiple buffers sometimes causes errors with the buffer bar
+- add last win does not set on new ui2 windows
+- terminal buffer becomes listed
+- buffer will open in quickfix window
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
@@ -8,6 +16,7 @@
 ? Add QuickFix autocommand
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted by making single "eternal" buffer
+- vim.uv.fs_poll?
 - Add type annotations
 - Add documentation
 - Add health
@@ -18,10 +27,5 @@
 - Rewrite printing to use more efficient concat from lua (strings are
   immutable)
 - Add debounce for buffer bar render
-- Investigate vim.uv for filesystem operations
-- Make state encapsulation consistent
-- Make a more generic registration system for submodules
-- Enforce separation of state tables and printed lines in file tree and buffer
-  bar
+? Make a more generic registration system for modules
 - Register highlight groups on ColorScheme event
-- Add constants file

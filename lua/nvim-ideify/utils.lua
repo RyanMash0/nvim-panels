@@ -1,30 +1,166 @@
 local M = {}
 local state = require('nvim-ideify.state')
-local pos = require('nvim-ideify.position')
+local constants = require('nvim-ideify.constants')
+
+function M.position_to_split(pos)
+	local position = constants.position
+	local split = constants.split
+	if pos == position.LEFT then
+		return split.LEFT
+	elseif pos == position.RIGHT then
+		return split.RIGHT
+	elseif pos == position.TOP then
+		return split.ABOVE
+	elseif pos == position.BOTTOM then
+		return split.BELOW
+	end
+end
+
+function M.split_to_position(sp)
+	local position = constants.position
+	local split = constants.split
+	if sp == split.LEFT then
+		return position.LEFT
+	elseif sp == split.RIGHT then
+		return position.RIGHT
+	elseif sp == split.ABOVE then
+		return position.TOP
+	elseif sp == split.BELOW then
+		return position.BOTTOM
+	end
+end
+
+local function check_err(err)
+	if not err then
+		return constants.fs_err.NONE
+	elseif err:match('^EEXIST') then
+		return constants.fs_err.EXISTS
+	elseif err:match('^ENOENT') then
+		return constants.fs_err.NOENTRY
+	end
+
+	return constants.fs_err.OTHER
+end
+
+local function await_stat(path)
+	local co = coroutine.running()
+	vim.uv.fs_stat(path, function(err, stat)
+		vim.schedule(function()
+			coroutine.resume(co, err, stat and stat.type)
+		end)
+	end)
+	return coroutine.yield()
+end
+
+local function await_mkdir(path, mode)
+	local co = coroutine.running()
+	vim.uv.fs_mkdir(path, mode, function(err, success)
+		vim.schedule(function()
+			coroutine.resume(co, err, success)
+		end)
+	end)
+	return coroutine.yield()
+end
+
+local function get_dir_exists(check, type)
+	return check == constants.fs_err.NONE and type == 'directory'
+end
+
+local function do_mkdir_p(path, mode)
+	local dirs = {}
+	local parent = path
+	local fs_err = constants.fs_err
+	local err, type = await_stat(parent)
+	local check = check_err(err)
+	local dir_exists = get_dir_exists(check, type)
+
+	if not dir_exists and check ~= fs_err.NOENTRY then
+		return err, false
+	end
+
+	while not dir_exists do
+		table.insert(dirs, 1, parent)
+		path = parent
+		parent = vim.fs.dirname(parent)
+
+		if parent == path or not parent then return err, false end
+
+		err, type = await_stat(parent)
+		check = check_err(err)
+		dir_exists = get_dir_exists(check, type)
+
+		if not dir_exists and check ~= fs_err.NOENTRY then
+			return err, false
+		end
+	end
+
+	local success
+	for _, dir in ipairs(dirs) do
+		err, success = await_mkdir(dir, mode)
+		if not success and check_err(err) ~= fs_err.EXISTS then
+			return err, success
+		end
+	end
+
+	return nil, true
+end
+
+function M.mkdir_p_async(path, mode, callback)
+	coroutine.wrap(function()
+		local err, success = do_mkdir_p(path, mode)
+
+		if callback then
+			return callback(err, success)
+		end
+	end)()
+end
+
+function M.repeat_str(str, num)
+	local str_array = {}
+	for _ = 1, num do
+		table.insert(str_array, str)
+	end
+	return table.concat(str_array)
+end
+
+function M.create_win_with_opts(buf, enter, config, opts)
+	local win = vim.api.nvim_open_win(buf, enter, config)
+
+	M.set_opts(constants.type.WIN, win, opts)
+
+	return win
+end
+
+function M.create_buf_with_opts(config, opts)
+	local buf = vim.api.nvim_create_buf(config.listed, config.scratch)
+
+	M.set_opts(constants.type.BUF, buf, opts)
+
+	return buf
+end
+
+function M.set_opts(type, id, opts)
+	for key, val in pairs(opts) do
+		vim.api.nvim_set_option_value(key, val, { scope = 'local', [type] = id })
+	end
+end
 
 local function get_split_opts(plugin_wins)
 	local mods = M.get_modules()
+	local position = constants.position
+	local l_win = mods.left and mods.left.get_state().get_window() or -1
+	local r_win = mods.right and mods.right.get_state().get_window() or -1
+	local t_win = mods.top and mods.top.get_state().get_window() or -1
+	local b_win = mods.bottom and mods.bottom.get_state().get_window() or -1
 
-	if plugin_wins[
-		mods.bottom and mods.bottom:get_state():get_window() or -1
-		] then
-		vim.api.nvim_set_current_win(mods.bottom:get_state():get_window())
-		return { split = pos.top }
-	elseif plugin_wins[
-		mods.top and mods.top:get_state():get_window() or -1
-		] then
-		vim.api.nvim_set_current_win(mods.top:get_state():get_window())
-		return { split = pos.bottom}
-	elseif plugin_wins[
-		mods.right and mods.right:get_state():get_window() or -1
-		] then
-		vim.api.nvim_set_current_win(mods.right:get_state():get_window())
-		return { split = pos.left }
-	elseif plugin_wins[
-		mods.left and mods.left:get_state():get_window() or -1
-		] then
-		vim.api.nvim_set_current_win(mods.left:get_state():get_window())
-		return { split = pos.right }
+	if plugin_wins[l_win] then
+		return { split = M.position_to_split(position.LEFT) }
+	elseif plugin_wins[r_win] then
+		return { split = M.position_to_split(position.RIGHT) }
+	elseif plugin_wins[t_win] then
+		return { split = M.position_to_split(position.TOP) }
+	elseif plugin_wins[b_win] then
+		return { split = M.position_to_split(position.BOTTOM) }
 	end
 end
 
@@ -36,10 +172,10 @@ local function check_or_make_main_buf()
 	local bottom = mods.bottom
 
 	local bufs = vim.api.nvim_list_bufs()
-	local l_buf_id = left and left:get_state():get_buffer() or -1
-	local r_buf_id = right and right:get_state():get_buffer() or -1
-	local t_buf_id = top and top:get_state():get_buffer() or -1
-	local b_buf_id = bottom and bottom:get_state():get_buffer() or -1
+	local l_buf_id = left and left.get_state().get_buffer() or -1
+	local r_buf_id = right and right.get_state().get_buffer() or -1
+	local t_buf_id = top and top.get_state().get_buffer() or -1
+	local b_buf_id = bottom and bottom.get_state().get_buffer() or -1
 	local l_buf_exists = M.buf_valid(l_buf_id)
 	local r_buf_exists = M.buf_valid(r_buf_id)
 	local t_buf_exists = M.buf_valid(t_buf_id)
@@ -116,10 +252,10 @@ function M.get_plugin_wins()
 	local top = modules.top
 	local bottom = modules.bottom
 	return {
-		left = left and left:get_state():get_window() or -1,
-		right = right and right:get_state():get_window() or -1,
-		top = top and top:get_state():get_window() or -1,
-		bottom = bottom and bottom:get_state():get_window() or -1,
+		left = left and left.get_state().get_window() or -1,
+		right = right and right.get_state().get_window() or -1,
+		top = top and top.get_state().get_window() or -1,
+		bottom = bottom and bottom.get_state().get_window() or -1,
 	}
 end
 
@@ -146,10 +282,10 @@ function M.check_or_make_main_win()
 	local bottom = mods.bottom
 
 	local wins = vim.api.nvim_tabpage_list_wins(0)
-	local l_win_id = left and left:get_state():get_window() or -1
-	local r_win_id = right and right:get_state():get_window() or -1
-	local t_win_id = top and top:get_state():get_window() or -1
-	local b_win_id = bottom and bottom:get_state():get_window() or -1
+	local l_win_id = left and left.get_state().get_window() or -1
+	local r_win_id = right and right.get_state().get_window() or -1
+	local t_win_id = top and top.get_state().get_window() or -1
+	local b_win_id = bottom and bottom.get_state().get_window() or -1
 	local l_win_exists = M.win_valid(l_win_id)
 	local r_win_exists = M.win_valid(r_win_id)
 	local t_win_exists = M.win_valid(t_win_id)
@@ -174,7 +310,9 @@ function M.check_or_make_main_win()
 		end
 	end
 
-	if next(check_wins) == nil then
+	local min = next(check_wins)
+
+	if min == nil then
 		local exclude_wins = {
 			[l_win_id] = l_win_exists,
 			[r_win_id] = r_win_exists,
@@ -188,7 +326,6 @@ function M.check_or_make_main_win()
 		return
 	end
 
-	local min, _ = next(check_wins)
 	for win, i in pairs(check_wins) do
 		if i < check_wins[min] then
 			min = win

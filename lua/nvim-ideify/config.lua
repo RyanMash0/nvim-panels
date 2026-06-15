@@ -1,6 +1,7 @@
 local M = {}
-local pos = require('nvim-ideify.position')
+local constants = require('nvim-ideify.constants')
 
+---@type nvim-ideify.config
 M.defaults = {
 	layout = {
 		left = {
@@ -33,19 +34,31 @@ M.defaults = {
 		},
 	},
 	split_order = {
-		first = pos.left,
-		second = pos.right,
-		third = pos.top,
-		fourth = pos.bottom,
+		first = constants.position.LEFT,
+		second = constants.position.RIGHT,
+		third = constants.position.TOP,
+		fourth = constants.position.BOTTOM,
 	},
 }
 
+---@type nvim-ideify.config
 M.options = vim.deepcopy(M.defaults)
 
 function M.setup(opts)
-	require('nvim-ideify.filetree'):get_config().setup(opts.filetree)
-	require('nvim-ideify.bufferbar'):get_config().setup(opts.bufferbar)
-	require('nvim-ideify.terminal'):get_config().setup(opts.terminal)
+	local utils = require('nvim-ideify.utils')
+	utils.mkdir_p_async(
+		constants.trash_path,
+		tonumber('755', 8),
+		function(err, success)
+			if not success then
+				local err_str = 'Failed to create trash directory: "' .. err .. '"'
+				vim.notify(err_str, vim.log.levels.ERROR)
+			end
+		end
+	)
+	require('nvim-ideify.filetree').get_config().setup(opts.filetree)
+	require('nvim-ideify.bufferbar').get_config().setup(opts.bufferbar)
+	require('nvim-ideify.terminal').get_config().setup(opts.terminal)
 
 	M.options = vim.tbl_deep_extend('force', M.defaults, opts or {})
 end

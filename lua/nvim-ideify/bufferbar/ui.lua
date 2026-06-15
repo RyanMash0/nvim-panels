@@ -1,6 +1,7 @@
 local M = {}
 local config = require('nvim-ideify.bufferbar.config')
 local state = require('nvim-ideify.bufferbar.state')
+local constants = require('nvim-ideify.bufferbar.constants')
 local utils = require('nvim-ideify.bufferbar.utils')
 local g_utils = require('nvim-ideify.utils')
 
@@ -9,14 +10,17 @@ local function truncate_end(str, num)
 	return str:sub(1, num - 3) .. '...'
 end
 
-local function truncate_middle(str, num)
-	if #str <= num then return str end
-	if str:match('^%.//?[^/]+/$') then return str:gsub('%.//', '/') end
-	if str:match('^%.//?[^/]+/[^/]+/$') then return str:gsub('%.//', '/') end
-	local prefix = str:match('^%./[^/]+/') or ''
-	if str:match('^%.//[^/]') then prefix = '/' end
-	local suffix = str:match('/[^/]+/$') or ''
-	return prefix .. '...' .. suffix
+local function truncate_middle(path, num)
+	if #path <= num then return path end
+	local suffix = vim.fs.basename(path)
+	local tmp = path
+	local prefix
+	while tmp ~= '.' do
+		prefix = tmp
+		tmp = vim.fs.dirname(tmp)
+	end
+
+	return prefix .. '/.../' .. suffix .. '/'
 end
 
 local function extend_length(str, num)
@@ -29,17 +33,16 @@ end
 
 local function buffer_delete(buf)
 		local cur_buf = g_utils.get_last_win_buf()
-		local buf_info = state.buffer_info
-		local buf_order = state.buffer_order
-		local del_info = buf_info[buf]
-		local del_pos = del_info.position
-		local new_pos = del_pos == #buf_order and del_pos - 1 or del_pos + 1
-		local new_buf = buf_order[new_pos]
+		local del_entry = state.get_entry_by_buf(buf)
+		local del_pos = del_entry.position
+		local is_last_buf = del_pos == state.get_num_bufs()
+		local new_pos = is_last_buf and del_pos - 1 or del_pos + 1
+		local new_buf = state.get_buf_by_pos(new_pos)
 		if not g_utils.buf_valid(new_buf) then new_buf = 0 end
 		vim.api.nvim_buf_delete(buf, {})
 		M.render()
-		local col = state.buttons_r[new_buf]
-		vim.api.nvim_win_set_cursor(state:get_window(), col and { 1, col } or { 2, 1 })
+		local col = state.get_button_by_buf(new_buf)
+		vim.api.nvim_win_set_cursor(state.get_window(), col and { 1, col } or { 2, 1 })
 
 		if buf ~= cur_buf then return cur_buf end
 
@@ -53,10 +56,10 @@ local function buffer_switch()
 end
 
 function M.action()
-	local win_id = state:get_window()
+	local win_id = state.get_window()
 	local pos = vim.api.nvim_win_get_cursor(win_id)
 	local cur_col = pos[2]
-	local button = pos[1] == 1 and state.buttons[cur_col]
+	local button = pos[1] == 1 and state.get_buf_by_button(cur_col)
 	local check_button = button and not vim.bo[button].modified
 	local buf = check_button and buffer_delete(button) or buffer_switch()
 
@@ -65,31 +68,30 @@ end
 
 function M.highlight()
 	g_utils.check_or_make_main_win()
-	local buf_id = state:get_buffer()
-	local ns = state:get_namespace()
+	local buf_id = state.get_buffer()
+	local ns = constants.namespace
 	vim.api.nvim_buf_clear_namespace(buf_id, ns, 0, -1)
 	local cur_buf = g_utils.get_last_win_buf()
-	local yanked = state.yanked
-	local hl_region = state:get_buffer_info()[cur_buf]
-	local yank_hl_region = state:get_buffer_info()[yanked]
+	local yanked = state.get_yanked()
+	local hl_region = state.get_entry_by_buf(cur_buf)
+	local yank_hl_region = state.get_entry_by_buf(yanked)
 	local hl_group = vim.api.nvim_get_hl_id_by_name('TabLineSel')
 	local yank_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarYank')
 	local close_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarClose')
 	local modified_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarModified')
-	-- local hl_group_bold = vim.api.nvim_get_hl_id_by_name('markdownBold')
 	if not hl_region or hl_region == vim.NIL then return end
 	local button_len = #config.options.styling.button.close
 
-	for tab_buf, info in pairs(state.buffer_info) do
-		vim.api.nvim_buf_set_extmark(buf_id, ns, 0, info.last - button_len, {
-			end_col = info.last,
-			hl_group = vim.bo[tab_buf].modified and modified_hl_group or close_hl_group,
+	for buf, entry in state.buf_entries_iterator() do
+		if not entry.last then return end
+		vim.api.nvim_buf_set_extmark(buf_id, ns, 0, entry.last - button_len, {
+			end_col = entry.last,
+			hl_group = vim.bo[buf].modified and modified_hl_group or close_hl_group,
 		})
 	end
 
 	if cur_buf ~= yanked then
 		vim.api.nvim_buf_set_extmark(buf_id, ns, 0, hl_region.first, {
-			-- end_col = hl_region.last - button_len,
 			end_col = hl_region.last,
 			hl_group = hl_group,
 		})
@@ -114,31 +116,31 @@ function M.highlight()
 end
 
 function M.render()
-	local buf_id = state:get_buffer()
+	local buf_id = state.get_buffer()
 	if not g_utils.buf_valid(buf_id) then return end
-	if not state.buffer_order then state.buffer_order = vim.api.nvim_list_bufs() end
-	local buffers = state.buffer_order
-	local bufs_filtered = {}
-	state.buttons = {}
-	for _, buf in ipairs(buffers) do
-		if vim.bo[buf].buflisted then
-			table.insert(bufs_filtered, buf)
+	state.clear_buf_data()
+
+	local remove_bufs = {}
+	for i, buf in state.buf_iterator() do
+		if not vim.bo[buf].buflisted then
+			table.insert(remove_bufs, 1, i)
 		end
 	end
 
-	local buffer_info = {}
+	for _, i in ipairs(remove_bufs) do
+		state.remove_buffer(i)
+	end
+
 	local buf_name
 	local file_name
 	local dir_name
-	local file_str = ''
-	local dir_str = ''
+	local dir_table = {}
+	local file_table = {}
 	local pref_len = config.options.name_pref_length
 	local truncate_len
 	local max_len
-	local abs_path
 	local interact
-	local tab_start
-	local tab_end
+	local cur_len = 0
 	local minimal = config.options.minimal
 	local normal_pad_pre = config.options.styling.padding.normal.before
 	local min_pad_pre = config.options.styling.padding.minimal.before
@@ -151,22 +153,25 @@ function M.render()
 	local modified = config.options.styling.button.modified
 	local button_bot = config.options.styling.button.below
 	local button_pos = config.options.styling.button.pos
-	local extra_len = string.len(pad_pre .. pad_post .. close)
+	local extra_len = #pad_pre + #pad_post + #close
+	local sep_len = #sep
+	local cwd = vim.uv.cwd() or vim.fn.getcwd()
 
-	for i, buf in ipairs(bufs_filtered) do
+	for i, buf in state.buf_iterator() do
 		buf_name = vim.api.nvim_buf_get_name(buf)
 
-		abs_path = vim.fs.abspath('.'):gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%0')
-		dir_name = buf_name:gsub(abs_path .. '/', '')
-		dir_name = './' .. dir_name:gsub('[^/]+$', '')
+		dir_name = vim.fs.dirname(buf_name)
+		dir_name = vim.fs.relpath(cwd, dir_name) or ''
+		if dir_name == '.' then dir_name = '' end
 		dir_name = truncate_middle(dir_name, pref_len)
+		dir_name = './' .. dir_name
 
 		truncate_len = math.max(pref_len, #dir_name)
-		file_name = buf_name:match('[^/]+$') or ''
+		file_name = vim.fs.basename(buf_name)
 
 		if minimal then
 			dir_name = file_name:match('^[^%.]+') or ''
-			file_name = file_name:match('%..*') or ''
+			file_name = file_name:gsub('[^%.]+', '') or ''
 		else
 			file_name = truncate_end(file_name, truncate_len)
 		end
@@ -176,22 +181,29 @@ function M.render()
 		file_name = extend_length(file_name, max_len)
 		dir_name = extend_length(dir_name, max_len)
 
-		tab_start = #file_str
-		tab_end = tab_start + max_len + extra_len
-
-		buffer_info[buf] = { first = tab_start, last = tab_end, position = i }
+		state.register_buf_entry(buf, cur_len, max_len + extra_len, i)
+		cur_len = cur_len + max_len + extra_len + sep_len
 
 		if vim.bo[buf].modified then interact = modified
 		else interact = close end
 
-		dir_str = dir_str .. pad_pre .. dir_name .. pad_post .. interact .. sep
-		file_str = file_str .. pad_pre .. file_name .. pad_post .. button_bot .. sep
-		state.buttons[tab_end - button_pos] = buf
-		state.buttons_r[buf] = tab_end - button_pos
+		table.insert(dir_table, pad_pre)
+		table.insert(dir_table, dir_name)
+		table.insert(dir_table, pad_post)
+		table.insert(dir_table, interact)
+		table.insert(dir_table, sep)
+
+		table.insert(file_table, pad_pre)
+		table.insert(file_table, file_name)
+		table.insert(file_table, pad_post)
+		table.insert(file_table, button_bot)
+		table.insert(file_table, sep)
+		state.register_button(buf, cur_len - sep_len - button_pos)
 	end
 
-	-- vim.print(buffer_info)
-	state:set_buffer_info(buffer_info)
+	local dir_str = table.concat(dir_table)
+	local file_str = table.concat(file_table)
+
 	vim.bo[buf_id].modifiable = true
 	vim.api.nvim_buf_set_lines(buf_id, 0, -1, true, {dir_str, file_str})
 	vim.bo[buf_id].modifiable = false

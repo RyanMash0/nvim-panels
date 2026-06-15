@@ -1,65 +1,58 @@
 local M = {}
 local state = require('nvim-ideify.terminal.state')
 local config = require('nvim-ideify.terminal.config')
+local constants = require('nvim-ideify.terminal.constants')
 local g_utils = require('nvim-ideify.utils')
 local g_ui = require('nvim-ideify.ui')
 
-function M.set_statusline()
-end
-
 function M.render()
 	-- vim.api.nvim_open_term(term_buf, {})
-	local buf = state:get_buffer()
-	local win = state.window
+	local buf_id = state.get_buffer()
+	local win_id = state.get_window()
 
-	if not g_utils.buf_valid(buf) then
+	if not g_utils.buf_valid(buf_id) then
 		g_ui.open()
-		state.extra_buffers = {}
-		state.extra_buffers_r = {}
+		state.clear_buf_list()
 		return M.render()
 	end
 
-	if vim.bo[buf].buftype ~= 'terminal' then
-		vim.wo[win].winfixbuf = false
-		vim.api.nvim_buf_call(buf, function() vim.cmd.terminal() end)
-		vim.wo[win].winfixbuf = true
+	if vim.bo[buf_id].buftype ~= 'terminal' then
+		vim.wo[win_id].winfixbuf = false
+		vim.api.nvim_buf_call(buf_id, function()
+			vim.fn.jobstart({ 'bash' }, { term = true })
+		end)
+		vim.wo[win_id].winfixbuf = true
 	end
 
-	local extra_buffers = state.extra_buffers
-	local extra_buffers_r = state.extra_buffers_r
+	state.register_main_buf()
 
-	for key, val in pairs(extra_buffers_r) do
-		if val == 1 then
-			extra_buffers_r[key] = nil
+	for _, buf in state.buf_iterator(2) do
+		if vim.bo[buf].buftype ~= 'terminal' then
+			vim.api.nvim_buf_call(buf, function()
+				vim.fn.jobstart({ 'bash' }, { term = true })
+			end)
 		end
+		vim.bo[buf].buflisted = false
 	end
 
-	extra_buffers[1] = buf
-	extra_buffers_r[buf] = 1
-
-	local extra_buf_str = ' %#StatusLine#|'
-	local cur_buf = vim.api.nvim_win_get_buf(win)
-	local sel_idx = state.extra_buffers_r[cur_buf]
-	local sel_hl_str = '%#TabLineSel#'
-	local nosel_hl_str = '%#StatusLine#'
-	local check_idx
+	local sep = constants.statusline.sep
+	local hl_selected = constants.statusline.hl.selected
+	local hl_normal = constants.statusline.hl.normal
+	local statusline = { config.options.base_statusline }
+	local cur_buf = vim.api.nvim_win_get_buf(win_id)
+	local sel_pos = state.get_pos_by_buf(cur_buf)
 	local hl_str
 
-	for i, extra_buf in ipairs(extra_buffers) do
-		if vim.bo[extra_buf].buftype ~= 'terminal' then
-			vim.api.nvim_buf_call(extra_buf, function() vim.cmd.terminal() end)
-		end
-		vim.bo[extra_buf].buflisted = false
-		check_idx = i == sel_idx
-		hl_str = check_idx and sel_hl_str or nosel_hl_str
-		extra_buf_str = extra_buf_str .. hl_str .. ' ' .. tostring(i - 1) .. ' %#StatusLine#|'
+	for i, _ in state.buf_iterator() do
+		hl_str = (i == sel_pos and hl_selected) or hl_normal
+		table.insert(statusline, sep)
+		table.insert(statusline, hl_str)
+		table.insert(statusline, tostring(i - 1))
 	end
+	table.insert(statusline, sep)
 
-	local win_opts = config.options.window.opts
-	win_opts.statusline = config.options.base_statusline .. extra_buf_str
-	for key, val in pairs(win_opts) do
-		vim.api.nvim_set_option_value(key, val, { scope = 'local', win = win })
-	end
+	config.options.window.statusline = table.concat(statusline)
+	g_utils.set_opts('win', win_id, config.options.window)
 
 	local keymaps = require('nvim-ideify.terminal.keymaps')
 	keymaps.setup()

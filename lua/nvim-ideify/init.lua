@@ -24,8 +24,8 @@ M.hard_reset = function()
 	ui.open()
 end
 
-M.tree_refresh = filetree:get_ui().render
-M.bufferbar_refresh = bufferbar:get_ui().render
+M.tree_refresh = filetree.get_ui().render
+M.bufferbar_refresh = bufferbar.get_ui().render
 M.bufferbar_next = bufferbar.buffer_next
 M.bufferbar_previous = bufferbar.buffer_previous
 
@@ -94,7 +94,7 @@ vim.api.nvim_create_autocmd('TextChanged', {
 		local mod_win
 		local buf
 		for _, module in pairs(modules) do
-			mod_win = module:get_state():get_window()
+			mod_win = module.get_state().get_window()
 			mod_win = utils.win_valid(mod_win) and mod_win or 0
 			buf = vim.api.nvim_win_get_buf(mod_win)
 			if win == mod_win and vim.bo[buf].filetype == 'netrw' then
@@ -112,9 +112,9 @@ vim.api.nvim_create_autocmd('WinResized', {
 		local modules = utils.get_modules()
 		local mod_win
 		for _, module in pairs(modules) do
-			mod_win = module:get_state():get_window()
+			mod_win = module.get_state().get_window()
 			if win == mod_win then
-				module:get_ui().render()
+				module.get_ui().render()
 			end
 		end
 	end

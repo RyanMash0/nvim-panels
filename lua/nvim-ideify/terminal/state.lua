@@ -1,47 +1,96 @@
 local M = {}
 
-M.buffer = -1
-M.window = -1
-M.win_config = {}
-M.extra_buffers = {}
-M.extra_buffers_r = {}
+local constants = require('nvim-ideify.terminal.constants')
 
-M.namespace = vim.api.nvim_create_namespace('IDEifyTerminal')
+local buffer = -1
+local window = -1
+local win_config = {}
+local on_click = nil
 
-function M:set_buffer(buf_id)
-	self.buffer = buf_id
+local pos_to_buf = {}
+local buf_to_pos = {}
+
+function M.get_buffer()
+	return buffer
 end
 
-function M:get_buffer()
-	return self.buffer
+function M.set_buffer(buf_id)
+	buffer = buf_id
+	pos_to_buf = {}
+	buf_to_pos = {}
 end
 
-function M:set_window(win_id)
-	self.window = win_id
+function M.get_window()
+	return window
 end
 
-function M:get_window()
-	return self.window
+function M.set_window(win_id)
+	window = win_id
 end
 
-function M:set_win_config(config)
-	self.win_config = config
+function M.get_win_config()
+	return win_config
 end
 
-function M:get_win_config()
-	return self.win_config
+function M.set_win_config(config)
+	win_config = config
 end
 
-function M:get_namespace()
-	return self.namespace
+function M.get_on_click()
+	return on_click
 end
 
-function M:set_on_click(on_click)
-	self.on_click = on_click
+function M.set_on_click(fun)
+	on_click = fun
 end
 
-function M:get_on_click()
-	return self.on_click
+function M.clear_buf_list()
+	pos_to_buf = {}
+	buf_to_pos = {}
+end
+
+function M.register_main_buf()
+	pos_to_buf[1] = buffer
+	buf_to_pos[buffer] = 1
+end
+
+function M.register_buf(buf_id)
+	local pos = #pos_to_buf + 1
+	if pos > constants.MAX_BUFFERS then return end
+
+	pos_to_buf[pos] = buf_id
+	buf_to_pos[buf_id] = pos
+end
+
+function M.remove_buf(buf_id)
+	local pos = buf_to_pos[buf_id]
+	if not pos then return end
+
+	table.remove(pos_to_buf, pos)
+	buf_to_pos = {}
+	for key, val in pairs(pos_to_buf) do
+		buf_to_pos[val] = key
+	end
+end
+
+function M.get_pos_by_buf(buf_id)
+	return buf_to_pos[buf_id or -1]
+end
+
+function M.get_buf_by_pos(pos)
+	return pos_to_buf[pos or -1]
+end
+
+local function iter(_, i)
+	i = i + 1
+	local buf = pos_to_buf[i]
+	if not buf then return end
+
+	return i, buf
+end
+
+function M.buf_iterator(start_pos)
+	return iter, nil, (start_pos and start_pos - 1) or 0
 end
 
 return M

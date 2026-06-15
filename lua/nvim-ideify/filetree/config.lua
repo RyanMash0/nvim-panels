@@ -1,7 +1,16 @@
 local M = {}
 
 M.defaults = {
-	cache = true,
+	window = {
+		wrap = false,
+		number = false,
+		winfixbuf = true,
+		statusline = '[Files]',
+	},
+	buffer = {
+		modifiable = false,
+		buflisted = false,
+	},
 	show_keymaps = true,
 	header = function () return nil end,
 	keymaps = {
@@ -27,22 +36,6 @@ M.defaults = {
 		' ╎                           ╎',
 		' ╎ [t]oggle this menu        ╎',
 		' └╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┘',
-	},
-	window = {
-		start_opts = {},
-		opts = {
-			wrap = false,
-			number = false,
-			winfixbuf = true,
-			statusline = '[Files]',
-		},
-	},
-	buffer = {
-		listed = false,
-		scratch = true,
-		opts = {
-			modifiable = false,
-		},
 	},
 }
 

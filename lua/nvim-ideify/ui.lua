@@ -2,17 +2,45 @@ local M = {}
 local config = require('nvim-ideify.config')
 local state = require('nvim-ideify.state')
 local utils = require('nvim-ideify.utils')
-local pos = require('nvim-ideify.position')
-
-local modules = utils.get_modules()
-local left = modules.left
-local right = modules.right
-local top = modules.top
-local bottom = modules.bottom
+local constants = require('nvim-ideify.constants')
 
 M.windows = {}
 M.height_ratio = 1
 M.width_ratio = 1
+
+local function get_on_click()
+	return function()
+		local win = vim.fn.getmousepos().winid
+
+		local left = config.options.layout.left.module()
+		local right = config.options.layout.right.module()
+		local top = config.options.layout.top.module()
+		local bottom = config.options.layout.bottom.module()
+		local l_state = left and left.get_state()
+		local r_state = right and right.get_state()
+		local t_state = top and top.get_state()
+		local b_state = bottom and bottom.get_state()
+		local win_left = l_state and win == l_state.get_window()
+		local win_right = r_state and win == r_state.get_window()
+		local win_top = t_state and win == t_state.get_window()
+		local win_bottom = b_state and win == b_state.get_window()
+		local click_left = l_state and l_state.get_on_click()
+		local click_right = r_state and r_state.get_on_click()
+		local click_top = t_state and t_state.get_on_click()
+		local click_bottom = b_state and b_state.get_on_click()
+
+		if win_left and click_left then
+			click_left()
+		elseif win_right and click_right then
+			click_right()
+		elseif win_top and click_top then
+			click_top()
+		elseif win_bottom and click_bottom then
+			click_bottom()
+		end
+		return '<LeftMouse>'
+	end
+end
 
 local function leftmost_leaf(tree)
 	local leaf = tree
@@ -80,7 +108,6 @@ local function add_windows(forest, parents, depth)
 		M.windows[depth + 1] = {}
 		add_windows(new_forest, new_parents, depth + 1)
 	end
-
 end
 
 local function parse_layout()
@@ -167,94 +194,107 @@ local function open_wins()
 	end
 end
 
-local function get_panel_from_direction(direction)
-	if direction == pos.left then return config.options.layout.left
-	elseif direction == pos.right then return config.options.layout.right
-	elseif direction == pos.top then return config.options.layout.top
-	elseif direction == pos.bottom then return config.options.layout.bottom end
+local function get_panel_from_position(position)
+	local split = constants.position
+
+	if position == split.LEFT then
+		return config.options.layout.left
+	elseif position == split.RIGHT then
+		return config.options.layout.right
+	elseif position == split.TOP then
+		return config.options.layout.top
+	elseif position == split.BOTTOM then
+		return config.options.layout.bottom end
 end
 
-local function close_panel(module)
-	if not module then return end
-
-	utils.close_win(module:get_state():get_window())
-	utils.delete_buf(module:get_state():get_buffer())
-	module:get_state():set_window(-1)
-	module:get_state():set_buffer(-1)
-end
-
-local function hide_panel(module)
-	if not module then return end
-
-	utils.close_win(module:get_state():get_window())
-	module:get_state():set_window(-1)
-end
-
-local function open_panel(direction)
-	local panel = get_panel_from_direction(direction)
-	local adj_direction = pos[direction]
-	local panel_g_conf = config.options.layout[adj_direction]
-
-	if not panel.module() or panel_g_conf and panel_g_conf.hidden then
+local function close_panel(position)
+	local panel = get_panel_from_position(position)
+	if not panel.module() then
 		return
 	end
 
-	local listed = panel.module():get_config().options.buffer.listed
-	local scratch = panel.module():get_config().options.buffer.scratch
-	local buf = vim.api.nvim_create_buf(listed, scratch)
+	local panel_state = panel.module().get_state()
+	utils.close_win(panel_state.get_window())
+	utils.delete_buf(panel_state.get_buffer())
+	panel_state.set_window(-1)
+	panel_state.set_buffer(-1)
+end
 
-	panel.module():get_state():set_buffer(buf)
+local function hide_panel(position)
+	local panel = get_panel_from_position(position)
+	if not panel.module() then
+		return
+	end
 
-	local opts = panel.module():get_config().options.window.start_opts
-	opts.split = direction
-	if direction == pos.left or direction == pos.right then
-		opts.vertical = true
-		opts.width = panel.width
+	local panel_state = panel.module().get_state()
+	utils.close_win(panel_state.get_window())
+	panel_state.set_window(-1)
+end
+
+local function open_panel(position)
+	local panel = get_panel_from_position(position)
+	local panel_g_conf = config.options.layout[position]
+	local module = panel.module()
+	if not module or panel_g_conf and panel_g_conf.hidden then
+		return
+	end
+
+	local mod_conf = module.get_config()
+	local mod_constants = module.get_constants()
+	local mod_keys = module.get_keymaps()
+	local mod_state = module.get_state()
+	local mod_ui = module.get_ui()
+
+	local buf_conf = mod_constants.config.buffer
+
+	local pos = constants.position
+	local win_conf = module.get_constants().config.window
+	win_conf.split = utils.position_to_split(position)
+	if position == pos.LEFT or position == pos.RIGHT then
+		win_conf.vertical = true
+		win_conf.width = panel.width
 	else
-		opts.height = panel.height
+		win_conf.height = panel.height
 	end
 
-	panel.module():get_state():set_win_config(opts)
+	local buf = vim.api.nvim_create_buf(buf_conf.listed, buf_conf.scratch)
+	mod_state.set_buffer(buf)
 
-	local win = vim.api.nvim_open_win(buf, false, opts)
-	panel.module():get_state():set_window(win)
+	local win = vim.api.nvim_open_win(buf, false, win_conf)
+	mod_state.set_win_config(win_conf)
+	mod_state.set_window(win)
 
-	panel.module():get_ui().render()
+	local buf_opts = mod_conf.options.buffer
+	utils.set_opts(constants.type.BUF, buf, buf_opts)
 
-	panel.module():get_keymaps().setup()
+	local win_opts = mod_conf.options.window
+	utils.set_opts(constants.type.WIN, win, win_opts)
 
-	local buf_opts = panel.module():get_config().options.buffer.opts
-	for key, val in pairs(buf_opts) do
-		vim.api.nvim_set_option_value(key, val, { scope = 'local', buf = buf })
-	end
-
-	local win_opts = panel.module():get_config().options.window.opts
-	for key, val in pairs(win_opts) do
-		vim.api.nvim_set_option_value(key, val, { scope = 'local', win = win })
-	end
+	mod_ui.render()
+	mod_keys.setup()
 end
 
-local function unhide_panel(direction)
-	local panel = get_panel_from_direction(direction)
-	local adj_direction = pos[direction]
-	local panel_g_conf = config.options.layout[adj_direction]
-
-	if not panel.module() or panel_g_conf and panel_g_conf.hidden then
+local function unhide_panel(position)
+	local panel = get_panel_from_position(position)
+	local panel_g_conf = config.options.layout[position]
+	local module = panel.module()
+	if not module or panel_g_conf and panel_g_conf.hidden then
 		return
 	end
 
-	local panel_state = panel.module():get_state()
-	local opts = panel_state:get_win_config()
+	local mod_conf = module.get_config()
+	local mod_state = module.get_state()
 
-	if not utils.buf_valid(panel_state:get_buffer()) then return end
+	local win_conf = mod_state.get_win_config()
 
-	local win = vim.api.nvim_open_win(panel_state:get_buffer(), false, opts)
-	panel_state:set_window(win)
+	local buf = mod_state.get_buffer()
+	if not utils.buf_valid(buf) then return end
 
-	local win_opts = panel.module():get_config().options.window.opts
-	for key, val in pairs(win_opts) do
-		vim.api.nvim_set_option_value(key, val, { scope = 'local', win = win })
-	end
+	local win = vim.api.nvim_open_win(buf, false, win_conf)
+	mod_state.set_window(win)
+
+	local win_opts = mod_conf.options.window
+	utils.set_opts(constants.type.WIN, win, win_opts)
 end
 
 function M.close()
@@ -263,10 +303,10 @@ function M.close()
 	state.active = false
 	state.opened = false
 
-	close_panel(left)
-	close_panel(right)
-	close_panel(top)
-	close_panel(bottom)
+	close_panel(config.options.split_order.first)
+	close_panel(config.options.split_order.second)
+	close_panel(config.options.split_order.third)
+	close_panel(config.options.split_order.fourth)
 
 	if state.equalalways then
 		vim.opt.equalalways = true
@@ -286,25 +326,8 @@ function M.open()
 	open_panel(config.options.split_order.third)
 	open_panel(config.options.split_order.fourth)
 
-	-- I have to do this to get it to reload for some reason
-	left = config.options.layout.left.module()
-	right = config.options.layout.right.module()
-	top = config.options.layout.top.module()
-	bottom = config.options.layout.bottom.module()
-
-	vim.keymap.set('n', '<LeftMouse>', function()
-		local win = vim.fn.getmousepos().winid
-		if left and win == left:get_state():get_window() and left:get_state():get_on_click() then
-			left:get_state():get_on_click()()
-		elseif right and win == right:get_state():get_window() and right:get_state():get_on_click() then
-			right:get_state():get_on_click()()
-		elseif top and win == top:get_state():get_window() and top:get_state():get_on_click() then
-			top:get_state():get_on_click()()
-		elseif bottom and win == bottom:get_state():get_window() and bottom:get_state():get_on_click() then
-			bottom:get_state():get_on_click()()
-		end
-		return '<LeftMouse>'
-	end, { expr = true, remap = false })
+	local key_opts = { expr = true, remap = false }
+	vim.keymap.set('n', '<LeftMouse>', get_on_click(), key_opts)
 
 	open_wins()
 	state.active = true
@@ -316,10 +339,10 @@ function M.hide()
 
 	state.active = false
 
-	hide_panel(left)
-	hide_panel(right)
-	hide_panel(top)
-	hide_panel(bottom)
+	hide_panel(config.options.split_order.first)
+	hide_panel(config.options.split_order.second)
+	hide_panel(config.options.split_order.third)
+	hide_panel(config.options.split_order.fourth)
 
 	if state.equalalways then
 		vim.opt.equalalways = true
@@ -343,82 +366,64 @@ function M.show()
 	unhide_panel(config.options.split_order.third)
 	unhide_panel(config.options.split_order.fourth)
 
-	-- I have to do this to get it to reload for some reason
-	left = config.options.layout.left.module()
-	right = config.options.layout.right.module()
-	top = config.options.layout.top.module()
-	bottom = config.options.layout.bottom.module()
-
-	vim.keymap.set('n', '<LeftMouse>', function()
-		local win = vim.fn.getmousepos().winid
-		if left and win == left:get_state():get_window() and left:get_state():get_on_click() then
-			left:get_state():get_on_click()()
-		elseif right and win == right:get_state():get_window() and right:get_state():get_on_click() then
-			right:get_state():get_on_click()()
-		elseif top and win == top:get_state():get_window() and top:get_state():get_on_click() then
-			top:get_state():get_on_click()()
-		elseif bottom and win == bottom:get_state():get_window() and bottom:get_state():get_on_click() then
-			bottom:get_state():get_on_click()()
-		end
-		return '<LeftMouse>'
-	end, { expr = true, remap = false })
+	local key_opts = { expr = true, remap = false }
+	vim.keymap.set('n', '<LeftMouse>', get_on_click(), key_opts)
 
 	open_wins()
 	state.active = true
 end
 
 function M.module_buf_reload(module)
-	local listed = module:get_config().options.buffer.listed
-	local scratch = module:get_config().options.buffer.scratch
-	local buf = vim.api.nvim_create_buf(listed, scratch)
-	local win = module:get_state():get_window()
-	local buf_old = vim.api.nvim_win_get_buf(win)
+	local mod_conf = module.get_config()
+	local mod_constants = module.get_constants()
+	local mod_keys = module.get_keymaps()
+	local mod_state = module.get_state()
+	local mod_ui = module.get_ui()
 
+	local buf_conf = mod_constants.config.buffer
+	local buf = vim.api.nvim_create_buf(buf_conf.listed, buf_conf.scratch)
+	local win = mod_state.get_window()
+	local buf_old = vim.api.nvim_win_get_buf(win)
 
 	vim.wo[win].winfixbuf = false
 	vim.api.nvim_win_set_buf(win, buf)
 	vim.wo[win].winfixbuf = true
 
-	module:get_state():set_buffer(buf)
+	mod_state.set_buffer(buf)
 	if utils.buf_valid(buf_old) then
 		vim.api.nvim_buf_delete(buf_old, { force = true })
 	end
 
-	module:get_ui().render()
+	local buf_opts = mod_conf.options.buffer
+	utils.set_opts(constants.type.BUF, buf, buf_opts)
 
-	module:get_keymaps().setup()
+	local win_opts = mod_conf.options.window
+	utils.set_opts(constants.type.WIN, win, win_opts)
 
-	local buf_opts = module:get_config().options.buffer.opts
-	for key, val in pairs(buf_opts) do
-		vim.api.nvim_set_option_value(key, val, { scope = 'local', buf = buf })
-	end
-
-	local win_opts = module:get_config().options.window.opts
-	for key, val in pairs(win_opts) do
-		vim.api.nvim_set_option_value(key, val, { scope = 'local', win = win })
-	end
+	mod_ui.render()
+	mod_keys.setup()
 end
 
-local function panel_size_reset(direction)
-	local panel = get_panel_from_direction(direction)
-	if not panel.module() then return end
-	local panel_win = panel.module():get_state():get_window()
-	if not utils.win_valid(panel_win) then return end
-
-	local opts
-	if direction == pos.left or direction == pos.right then
-		opts = { width = panel.width }
-	else
-		opts = { height = panel.height }
+local function panel_size_reset(position)
+	local panel = get_panel_from_position(position)
+	local panel_g_conf = config.options.layout[position]
+	local module = panel.module()
+	if not module or panel_g_conf and panel_g_conf.hidden then
+		return
 	end
-	opts.split = direction
 
+	local mod_state = module.get_state()
+	local mod_win = mod_state.get_window()
+	if not utils.win_valid(mod_win) then
+		open_panel(position)
+		return
+	end
+
+	local win_conf = mod_state.get_win_config()
+
+	utils.check_or_make_main_win()
 	vim.api.nvim_set_current_win(state.wins.main)
-	vim.api.nvim_win_set_config(panel_win, opts)
-
-	panel.module():get_state():set_win_config(
-		vim.api.nvim_win_get_config(panel_win)
-	)
+	vim.api.nvim_win_set_config(mod_win, win_conf)
 end
 
 function M.reset()

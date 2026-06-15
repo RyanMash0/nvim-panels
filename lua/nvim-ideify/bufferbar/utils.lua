@@ -8,10 +8,9 @@ function M.string_to_reg(str)
 end
 
 function M.get_sel_buffer()
-	local win = state:get_window()
+	local win = state.get_window()
 	local col = vim.api.nvim_win_get_cursor(win)[2]
-	local buffer_info = state:get_buffer_info()
-	for key, val in pairs(buffer_info) do
+	for key, val in state.buf_entries_iterator() do
 		if val and col >= val.first and col <= val.last then
 			return key
 		end
@@ -21,33 +20,32 @@ end
 function M.buffer_yank()
 	local ui = require('nvim-ideify.bufferbar.ui')
 	local buf = M.get_sel_buffer()
-	state.yanked = buf
-	ui.render()
+	state.set_yanked(buf)
+
+	vim.schedule(ui.render)
 end
 
 local function buffer_put_rel(offset)
 	local ui = require('nvim-ideify.bufferbar.ui')
 	local sel = M.get_sel_buffer()
-	local yanked = state.yanked
-	if not state.yanked then return end
+	local yanked = state.get_yanked()
+	if not yanked then return end
 
-	local buf_info = state.buffer_info
-	local buf_order = state.buffer_order
-	local sel_info = buf_info[sel]
+	local sel_info = state.get_entry_by_buf(sel)
 	local sel_pos = sel_info and sel_info.position
-	local yanked_info = buf_info[yanked]
+	local yanked_info = state.get_entry_by_buf(yanked)
 	local yanked_pos = yanked_info and yanked_info.position
 	local before = yanked_pos < sel_pos and 1 or 0
 
-	if sel == state.yanked then
+	if sel == yanked then
 		return
 	end
 
-	table.remove(buf_order, yanked_pos)
-	table.insert(buf_order, sel_pos + offset - before, yanked)
-	state.yanked = nil
+	state.remove_buffer(yanked_pos)
+	state.insert_buffer(yanked, sel_pos + offset - before)
+	state.set_yanked(nil)
 
-	ui.render()
+	vim.schedule(ui.render)
 end
 
 function M.buffer_put_before()
@@ -62,7 +60,7 @@ function M.generate_buf_scroll(back)
 	return function()
 		local b = back == 'b'
 		local flags = 'W' .. back
-		local win = state:get_window()
+		local win = state.get_window()
 		local line = vim.api.nvim_win_get_cursor(win)[1]
 		local minimal = config.options.minimal
 		local new_pos
