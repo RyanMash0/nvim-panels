@@ -257,7 +257,7 @@ function M.render()
 
 	local header_height = state.get_header_height()
 
-	state.clear_tree()
+	state.clear_entries()
 	state.clear_text()
 	for _, text in ipairs(header) do
 		state.insert_tree_entry(header_entry, text)
