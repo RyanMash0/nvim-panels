@@ -1,8 +1,9 @@
 local M = {}
 
-local state = require('nvim-ideify.filetree.state')
-local config = require('nvim-ideify.filetree.config')
 local g_utils = require('nvim-ideify.utils')
+
+local config = require('nvim-ideify.filetree.config')
+local state = require('nvim-ideify.filetree.state')
 
 function M.go_to_dir()
 	local ui = require('nvim-ideify.filetree.ui')

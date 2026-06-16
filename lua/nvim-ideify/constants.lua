@@ -31,8 +31,15 @@ M.fs_err = {
 	OTHER = 4,
 }
 
-M.rel_trash_path = '/.local/share/Trash/nvim-ideify'
+---@type table<integer, boolean>
+M.ui2_buffers = {
+	[2] = true,
+	[3] = true,
+	[4] = true,
+	[5] = true,
+}
 
-M.trash_path = vim.fs.joinpath(vim.uv.os_homedir(), M.rel_trash_path)
+---@type nvim-ideify.invalid_id
+M.NOID = -1
 
 return M

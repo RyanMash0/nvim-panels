@@ -1,9 +1,11 @@
 local M = {}
 
+local g_constants = require('nvim-ideify.constants')
+
 local constants = require('nvim-ideify.terminal.constants')
 
-local buffer = -1
-local window = -1
+local buffer = g_constants.NOID
+local window = g_constants.NOID
 local win_config = {}
 local on_click = nil
 
@@ -74,11 +76,11 @@ function M.remove_buf(buf_id)
 end
 
 function M.get_pos_by_buf(buf_id)
-	return buf_to_pos[buf_id or -1]
+	return buf_to_pos[buf_id or g_constants.NOID]
 end
 
 function M.get_buf_by_pos(pos)
-	return pos_to_buf[pos or -1]
+	return pos_to_buf[pos or g_constants.NOID]
 end
 
 local function iter(_, i)

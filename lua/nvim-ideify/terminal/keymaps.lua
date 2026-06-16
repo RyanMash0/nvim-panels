@@ -1,8 +1,9 @@
 local M = {}
+
+local config = require('nvim-ideify.terminal.config')
+local constants = require('nvim-ideify.terminal.constants')
 local state = require('nvim-ideify.terminal.state')
 local utils = require('nvim-ideify.terminal.utils')
-local constants = require('nvim-ideify.terminal.constants')
-local config = require('nvim-ideify.terminal.config')
 
 function M.setup()
 	local function generate_switch(num)

@@ -1,9 +1,10 @@
 local M = {}
-local state = require('nvim-ideify.filetree.state')
+
 local config = require('nvim-ideify.filetree.config')
+local fs_operations = require('nvim-ideify.filetree.fs_operations')
+local state = require('nvim-ideify.filetree.state')
 local ui = require('nvim-ideify.filetree.ui')
 local utils = require('nvim-ideify.filetree.utils')
-local fs_operations = require('nvim-ideify.filetree.fs_operations')
 
 function M.setup()
 	local opts = { buffer = state.get_buffer(), expr = false, remap = false, }

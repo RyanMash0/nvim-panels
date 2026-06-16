@@ -17,4 +17,6 @@ M.confirm = {
 	A = 2,
 }
 
+M.BASE_DEPTH = -1
+
 return M

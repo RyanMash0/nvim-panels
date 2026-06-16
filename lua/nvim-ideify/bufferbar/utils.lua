@@ -1,7 +1,7 @@
 local M = {}
 
-local state = require('nvim-ideify.bufferbar.state')
 local config = require('nvim-ideify.bufferbar.config')
+local state = require('nvim-ideify.bufferbar.state')
 
 function M.string_to_reg(str)
 	return str:gsub('([\\\\%.%*%^%$%[%]])', '\\%1')

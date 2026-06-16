@@ -1,9 +1,12 @@
 local M = {}
-local state = require('nvim-ideify.filetree.state')
-local utils = require('nvim-ideify.filetree.utils')
-local constants = require('nvim-ideify.filetree.constants')
+
+local g_constants = require('nvim-ideify.constants')
 local g_state = require('nvim-ideify.state')
 local g_utils = require('nvim-ideify.utils')
+
+local constants = require('nvim-ideify.filetree.constants')
+local state = require('nvim-ideify.filetree.state')
+local utils = require('nvim-ideify.filetree.utils')
 
 M.get_default_header = utils.get_default_header
 M.get_cwd_array = utils.get_cwd_array
@@ -111,7 +114,7 @@ local function close(line)
 
 	local path
 	local cur_entry = state.get_entry_by_line(line + 1)
-	while ((cur_entry and cur_entry.depth) or -1) > parent.depth do
+	while ((cur_entry and cur_entry.depth) or constants.BASE_DEPTH) > parent.depth do
 		path = cur_entry.path
 		state.remove_source(path)
 		if state.is_target(path) then
@@ -176,7 +179,7 @@ function M.action()
 		vim.api.nvim_set_current_win(last_win)
 
 		local new_buf = vim.fn.bufnr(parent.path, false)
-		if new_buf == -1 then
+		if new_buf == g_constants.NOID then
 			vim.cmd.edit({ args = { parent.path } })
 		else
 			g_utils.set_last_win_buf(new_buf)
@@ -245,12 +248,12 @@ end
 function M.render()
 	local path = vim.uv.cwd() or vim.fn.getcwd()
 	local header_entry = {
-		depth = -1,
+		depth = constants.BASE_DEPTH,
 		path = path,
 		type = 'Header',
 	}
 	local parent_dir_entry = {
-		depth = -1,
+		depth = constants.BASE_DEPTH,
 		path = path,
 		type = 'directory',
 	}

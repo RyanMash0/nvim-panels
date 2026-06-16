@@ -4,14 +4,15 @@
 ? grn across multiple buffers sometimes causes errors with the buffer bar
 - Buffer bar highlighting goes away
 - Resizing terminal with command does not refresh statusline
-- Copying files
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
 -------------------------------------------------------------------------------
 ? Render debounce
+- Add state saving on exit
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted by making single "eternal" buffer
+- Add empty sources acts on current line
 - Finish type annotations
 - Add documentation
 - Add health

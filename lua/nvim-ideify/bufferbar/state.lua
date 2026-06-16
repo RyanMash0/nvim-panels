@@ -1,7 +1,9 @@
 local M = {}
 
-local buffer = -1
-local window = -1
+local g_constants = require('nvim-ideify.constants')
+
+local buffer = g_constants.NOID
+local window = g_constants.NOID
 local win_config = {}
 local on_click = nil
 
@@ -100,19 +102,19 @@ function M.buf_entries_iterator()
 end
 
 function M.get_entry_by_buf(buf)
-	return buf_to_entry[buf or -1]
+	return buf_to_entry[buf or g_constants.NOID]
 end
 
 function M.get_buf_by_pos(pos)
-	return pos_to_buf[pos or -1]
+	return pos_to_buf[pos or g_constants.NOID]
 end
 
 function M.get_buf_by_button(button)
-	return button_to_buf[button or -1]
+	return button_to_buf[button or g_constants.NOID]
 end
 
 function M.get_button_by_buf(buf)
-	return buf_to_button[buf or -1]
+	return buf_to_button[buf or g_constants.NOID]
 end
 
 function M.get_num_bufs()

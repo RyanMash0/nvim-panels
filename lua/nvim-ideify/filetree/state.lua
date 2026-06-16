@@ -1,7 +1,9 @@
 local M = {}
 
-local buffer = -1
-local window = -1
+local g_constants = require('nvim-ideify.constants')
+
+local buffer = g_constants.NOID
+local window = g_constants.NOID
 local win_config = {}
 local on_click = nil
 

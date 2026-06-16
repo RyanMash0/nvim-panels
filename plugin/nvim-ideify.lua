@@ -1,4 +1,4 @@
-if vim.g.loader_nvim_ideify then
+if vim.g.loaded_nvim_ideify then
 	return
 end
 vim.g.loaded_nvim_ideify = 1

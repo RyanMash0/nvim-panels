@@ -1,6 +1,7 @@
 local M = {}
-local state = require('nvim-ideify.state')
+
 local constants = require('nvim-ideify.constants')
+local state = require('nvim-ideify.state')
 
 function M.position_to_split(pos)
 	local position = constants.position
@@ -147,54 +148,40 @@ function M.set_opts(type, id, opts)
 	end
 end
 
-local function get_split_opts(plugin_wins)
-	local mods = M.get_modules()
+local function get_split_opts(pos_to_win_valid)
 	local position = constants.position
-	local l_win = mods.left and mods.left.get_state().get_window() or -1
-	local r_win = mods.right and mods.right.get_state().get_window() or -1
-	local t_win = mods.top and mods.top.get_state().get_window() or -1
-	local b_win = mods.bottom and mods.bottom.get_state().get_window() or -1
 
-	if plugin_wins[l_win] then
+	if pos_to_win_valid[position.LEFT] then
 		return { split = M.position_to_split(position.LEFT) }
-	elseif plugin_wins[r_win] then
+	elseif pos_to_win_valid[position.RIGHT] then
 		return { split = M.position_to_split(position.RIGHT) }
-	elseif plugin_wins[t_win] then
+	elseif pos_to_win_valid[position.TOP] then
 		return { split = M.position_to_split(position.TOP) }
-	elseif plugin_wins[b_win] then
+	elseif pos_to_win_valid[position.BOTTOM] then
 		return { split = M.position_to_split(position.BOTTOM) }
 	end
 end
 
 local function check_or_make_main_buf()
-	local mods = M.get_modules()
-	local left = mods.left
-	local right = mods.right
-	local top = mods.top
-	local bottom = mods.bottom
-
 	local bufs = vim.api.nvim_list_bufs()
-	local l_buf_id = left and left.get_state().get_buffer() or -1
-	local r_buf_id = right and right.get_state().get_buffer() or -1
-	local t_buf_id = top and top.get_state().get_buffer() or -1
-	local b_buf_id = bottom and bottom.get_state().get_buffer() or -1
-	local l_buf_exists = M.buf_valid(l_buf_id)
-	local r_buf_exists = M.buf_valid(r_buf_id)
-	local t_buf_exists = M.buf_valid(t_buf_id)
-	local b_buf_exists = M.buf_valid(b_buf_id)
-
 	local check_bufs = {}
 	for i, buf in ipairs(bufs) do
 		check_bufs[buf] = i
 	end
 
-	if l_buf_exists then check_bufs[l_buf_id] = nil end
-	if r_buf_exists then check_bufs[r_buf_id] = nil end
-	if t_buf_exists then check_bufs[t_buf_id] = nil end
-	if b_buf_exists then check_bufs[b_buf_id] = nil end
+	local mods = M.get_modules()
+	local mod_buf
+	local mod_buf_valid
+	for _, module in pairs(mods) do
+		mod_buf = module and module.get_state().get_buffer() or constants.NOID
+		mod_buf_valid = M.buf_valid(mod_buf)
+		if mod_buf_valid then
+			check_bufs[mod_buf] = nil
+		end
+	end
 
-	for i = 2, 5 do
-		check_bufs[i] = nil
+	for id, _ in pairs(constants.ui2_buffers) do
+		check_bufs[id] = nil
 	end
 
 	if next(check_bufs) == nil then
@@ -252,15 +239,15 @@ function M.get_plugin_wins()
 	local top = modules.top
 	local bottom = modules.bottom
 	return {
-		left = left and left.get_state().get_window() or -1,
-		right = right and right.get_state().get_window() or -1,
-		top = top and top.get_state().get_window() or -1,
-		bottom = bottom and bottom.get_state().get_window() or -1,
+		left = left and left.get_state().get_window() or constants.NOID,
+		right = right and right.get_state().get_window() or constants.NOID,
+		top = top and top.get_state().get_window() or constants.NOID,
+		bottom = bottom and bottom.get_state().get_window() or constants.NOID,
 	}
 end
 
 function M.is_plugin_win(win)
-	if win < 1000 then return false end
+	if not M.win_valid(win) then return false end
 	local wins = M.get_plugin_wins()
 	local l_win = wins.left
 	local r_win = wins.right
@@ -275,41 +262,34 @@ end
 function M.check_or_make_main_win()
 	if vim.api.nvim_win_is_valid(state.wins.main) then return end
 
-	local mods = M.get_modules()
-	local left = mods.left
-	local right = mods.right
-	local top = mods.top
-	local bottom = mods.bottom
-
 	local wins = vim.api.nvim_tabpage_list_wins(0)
-	local l_win_id = left and left.get_state().get_window() or -1
-	local r_win_id = right and right.get_state().get_window() or -1
-	local t_win_id = top and top.get_state().get_window() or -1
-	local b_win_id = bottom and bottom.get_state().get_window() or -1
-	local l_win_exists = M.win_valid(l_win_id)
-	local r_win_exists = M.win_valid(r_win_id)
-	local t_win_exists = M.win_valid(t_win_id)
-	local b_win_exists = M.win_valid(b_win_id)
-
 	local check_wins = {}
 	for i, win in ipairs(wins) do
 		check_wins[win] = i
 	end
 
+	local mods = M.get_modules()
+	local mod_win
+	local mod_win_valid
+	local pos_to_win_valid = {}
+	for position, module in pairs(mods) do
+		mod_win = module and module.get_state().get_window() or constants.NOID
+		mod_win_valid = M.win_valid(mod_win)
+		if mod_win_valid then
+			check_wins[mod_win] = nil
+			pos_to_win_valid[position] = true
+		end
+	end
+
 	local win_config
 	local win_buf
-
-	if l_win_exists then check_wins[l_win_id] = nil end
-	if r_win_exists then check_wins[r_win_id] = nil end
-	if t_win_exists then check_wins[t_win_id] = nil end
-	if b_win_exists then check_wins[b_win_id] = nil end
 
 	for win, _ in pairs(check_wins) do
 		win_config = vim.api.nvim_win_get_config(win)
 		win_buf = vim.api.nvim_win_get_buf(win)
 		if not win_config.focusable or win_config.relative ~= '' then
 			check_wins[win] = nil
-		elseif win_buf >= 2 and win_buf <= 5 then
+		elseif constants.ui2_buffers[win_buf] then
 			check_wins[win] = nil
 		end
 	end
@@ -317,16 +297,10 @@ function M.check_or_make_main_win()
 	local min = next(check_wins)
 
 	if min == nil then
-		local exclude_wins = {
-			[l_win_id] = l_win_exists,
-			[r_win_id] = r_win_exists,
-			[t_win_id] = t_win_exists,
-			[b_win_id] = b_win_exists,
-		}
 		local buf_id = check_or_make_main_buf()
-		local win_opts = get_split_opts(exclude_wins)
+		local win_opts = get_split_opts(pos_to_win_valid)
 		state.wins.main = vim.api.nvim_open_win(buf_id, true, win_opts)
-		require('nvim-ideify.ui').open()
+		require('nvim-ideify.ui').reset()
 		return
 	end
 

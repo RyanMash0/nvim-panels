@@ -1,9 +1,11 @@
 local M = {}
-local config = require('nvim-ideify.bufferbar.config')
-local state = require('nvim-ideify.bufferbar.state')
-local constants = require('nvim-ideify.bufferbar.constants')
-local utils = require('nvim-ideify.bufferbar.utils')
+
 local g_utils = require('nvim-ideify.utils')
+
+local config = require('nvim-ideify.bufferbar.config')
+local constants = require('nvim-ideify.bufferbar.constants')
+local state = require('nvim-ideify.bufferbar.state')
+local utils = require('nvim-ideify.bufferbar.utils')
 
 local function truncate_end(str, num)
 	if #str <= num then return str end

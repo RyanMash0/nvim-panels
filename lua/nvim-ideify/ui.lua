@@ -1,8 +1,9 @@
 local M = {}
+
 local config = require('nvim-ideify.config')
+local constants = require('nvim-ideify.constants')
 local state = require('nvim-ideify.state')
 local utils = require('nvim-ideify.utils')
-local constants = require('nvim-ideify.constants')
 
 M.windows = {}
 M.height_ratio = 1
@@ -93,7 +94,7 @@ local function add_windows(forest, parents, depth)
 					parent = parents[i],
 					config = win_config,
 					buffer = win_buf,
-					id = -1,
+					id = constants.NOID,
 				})
 
 				if subtree ~= leaf then
@@ -226,8 +227,8 @@ local function close_panel(position)
 	local panel_state = panel.module().get_state()
 	utils.close_win(panel_state.get_window())
 	utils.delete_buf(panel_state.get_buffer())
-	panel_state.set_window(-1)
-	panel_state.set_buffer(-1)
+	panel_state.set_window(constants.NOID)
+	panel_state.set_buffer(constants.NOID)
 end
 
 local function hide_panel(position)
@@ -238,7 +239,7 @@ local function hide_panel(position)
 
 	local panel_state = panel.module().get_state()
 	utils.close_win(panel_state.get_window())
-	panel_state.set_window(-1)
+	panel_state.set_window(constants.NOID)
 end
 
 local function open_panel(position)

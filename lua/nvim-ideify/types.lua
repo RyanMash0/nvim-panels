@@ -6,6 +6,7 @@
 ---@alias nvim-ideify.win_config vim.api.keyset.win_config
 ---@alias nvim-ideify.win_opts table<string, any>
 ---@alias nvim-ideify.buf_opts table<string, any>
+---@alias nvim-ideify.invalid_id -1
 
 ---@class nvim-ideify.buf_config
 ---@field listed boolean
@@ -76,6 +77,12 @@
 ---@field third nvim-ideify.position
 ---@field fourth nvim-ideify.position
 
+---@class nvim-ideify.config.permissions
+---@field directory integer
+---@field file integer
+
 ---@class nvim-ideify.config
 ---@field layout nvim-ideify.config.layout
 ---@field split_order nvim-ideify.config.split_order
+---@field permissions nvim-ideify.config.permissions
+---@field trash_path string

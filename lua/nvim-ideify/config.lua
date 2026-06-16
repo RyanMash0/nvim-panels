@@ -1,4 +1,5 @@
 local M = {}
+
 local constants = require('nvim-ideify.constants')
 
 ---@type nvim-ideify.config
@@ -39,6 +40,13 @@ M.defaults = {
 		third = constants.position.TOP,
 		fourth = constants.position.BOTTOM,
 	},
+	permissions = {
+		directory = tonumber('755', 8),
+		file = tonumber('644', 8),
+	},
+	trash_path = vim.fs.joinpath(
+		vim.uv.os_homedir(), '.local/share/Trash/nvim-ideify'
+	),
 }
 
 ---@type nvim-ideify.config
@@ -46,9 +54,15 @@ M.options = vim.deepcopy(M.defaults)
 
 function M.setup(opts)
 	local utils = require('nvim-ideify.utils')
+	opts = opts or {}
+	require('nvim-ideify.filetree').get_config().setup(opts.filetree)
+	require('nvim-ideify.bufferbar').get_config().setup(opts.bufferbar)
+	require('nvim-ideify.terminal').get_config().setup(opts.terminal)
+
+	M.options = vim.tbl_deep_extend('force', M.defaults, opts or {})
 	utils.mkdir_p_async(
-		constants.trash_path,
-		tonumber('755', 8),
+		M.options.trash_path,
+		M.options.permissions.directory,
 		function(err, success)
 			if not success then
 				local err_str = 'Failed to create trash directory: "' .. err .. '"'
@@ -56,11 +70,6 @@ function M.setup(opts)
 			end
 		end
 	)
-	require('nvim-ideify.filetree').get_config().setup(opts.filetree)
-	require('nvim-ideify.bufferbar').get_config().setup(opts.bufferbar)
-	require('nvim-ideify.terminal').get_config().setup(opts.terminal)
-
-	M.options = vim.tbl_deep_extend('force', M.defaults, opts or {})
 end
 
 return M

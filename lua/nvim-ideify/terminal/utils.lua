@@ -1,9 +1,10 @@
 local M = {}
 
-local state = require('nvim-ideify.terminal.state')
+local g_utils = require('nvim-ideify.utils')
+
 local config = require('nvim-ideify.terminal.config')
 local constants = require('nvim-ideify.terminal.constants')
-local g_utils = require('nvim-ideify.utils')
+local state = require('nvim-ideify.terminal.state')
 
 function M.buffer_add()
 	local ui = require('nvim-ideify.terminal.ui')
@@ -17,8 +18,8 @@ function M.buffer_add()
 end
 
 function M.buffer_delete()
-	local ui = require('nvim-ideify.terminal.ui')
 	local g_ui = require('nvim-ideify.ui')
+	local ui = require('nvim-ideify.terminal.ui')
 	local buf = vim.api.nvim_win_get_buf(state.get_window())
 
 	vim.api.nvim_buf_delete(buf, { force = true })

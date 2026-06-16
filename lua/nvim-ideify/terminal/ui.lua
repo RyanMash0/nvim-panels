@@ -1,9 +1,12 @@
 local M = {}
-local state = require('nvim-ideify.terminal.state')
-local config = require('nvim-ideify.terminal.config')
-local constants = require('nvim-ideify.terminal.constants')
+
 local g_utils = require('nvim-ideify.utils')
 local g_ui = require('nvim-ideify.ui')
+
+local config = require('nvim-ideify.terminal.config')
+local constants = require('nvim-ideify.terminal.constants')
+local state = require('nvim-ideify.terminal.state')
+
 local shell = vim.opt.shell:get()
 
 function M.render()

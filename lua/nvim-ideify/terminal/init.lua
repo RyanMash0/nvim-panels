@@ -1,5 +1,4 @@
----@type nvim-ideify.module
------@diagnostic disable-next-line: missing-fields
+---@class nvim-ideify.module
 local M = {}
 
 function M.get_config()

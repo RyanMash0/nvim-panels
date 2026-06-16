@@ -1,4 +1,5 @@
 local M = {}
+
 local config = require('nvim-ideify.bufferbar.config')
 local state = require('nvim-ideify.bufferbar.state')
 local ui = require('nvim-ideify.bufferbar.ui')

@@ -1,6 +1,10 @@
 local M = {}
+
 local config = require('nvim-ideify.config')
+local constants = require('nvim-ideify.constants')
+local state = require('nvim-ideify.state')
 local ui = require('nvim-ideify.ui')
+
 local filetree = require('nvim-ideify.filetree')
 local bufferbar = require('nvim-ideify.bufferbar')
 
@@ -9,7 +13,6 @@ M.close = ui.close
 M.hide = ui.hide
 M.show = ui.show
 M.toggle = function()
-	local state = require('nvim-ideify.state')
 	if state.active then
 		ui.hide()
 	elseif not state.active and state.opened then
@@ -30,7 +33,6 @@ M.bufferbar_next = bufferbar.buffer_next
 M.bufferbar_previous = bufferbar.buffer_previous
 
 function M.panel_toggle(direction)
-	local state = require('nvim-ideify.state')
 	local panel_confs = config.options.layout
 	if not panel_confs[direction] then return end
 
@@ -39,7 +41,6 @@ function M.panel_toggle(direction)
 end
 
 function M.panel_swap(position1, position2)
-	local state = require('nvim-ideify.state')
 	local panel_confs = config.options.layout
 	if not panel_confs[position1] or not panel_confs[position2] then return end
 
@@ -84,14 +85,13 @@ vim.api.nvim_create_augroup('IDEify', { clear = true })
 vim.api.nvim_create_autocmd('WinEnter', {
 	group = 'IDEify',
 	callback = function(args)
-		local state = require('nvim-ideify.state')
 		local utils = require('nvim-ideify.utils')
 
 		local win = vim.api.nvim_get_current_win()
 
 		local buf = args.buf
 		local buf_type = vim.bo[buf].buftype
-		local check_id = not (buf <= 5 and buf >= 2)
+		local check_id = not constants.ui2_buffers[buf]
 		local check_type = buf_type ~= 'terminal' and
 			buf_type ~= 'help' and buf_type ~= 'quickfix' and
 			buf_type ~= 'nofile' and buf_type ~= 'prompt'
@@ -133,7 +133,7 @@ vim.api.nvim_create_autocmd('WinResized', {
 	group = 'IDEify',
 	callback = function(args)
 		local utils = require('nvim-ideify.utils')
-		local win = tonumber(args.match) or -1
+		local win = tonumber(args.match) or constants.NOID
 		local modules = utils.get_modules()
 		local mod_win
 		for _, module in pairs(modules) do
