@@ -137,8 +137,8 @@ end
 function M.mark_target(path)
 	if not path then return end
 	for source in M.sources_iterator() do
-		if vim.fs.relpath(source, M.get_target()) then
-			return
+		if vim.fs.relpath(source, path) then
+			M.remove_source(source)
 		end
 	end
 
@@ -164,8 +164,9 @@ end
 
 function M.mark_source(path)
 	if not path then return end
-	if vim.fs.relpath(path, M.get_target()) then
-		return
+	local sub_target = vim.fs.relpath(path, M.get_target())
+	if sub_target and sub_target ~= '.' then
+		M.remove_target()
 	end
 
 	if fs_sources[path] then

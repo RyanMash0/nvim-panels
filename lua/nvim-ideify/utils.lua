@@ -30,13 +30,15 @@ function M.split_to_position(sp)
 	end
 end
 
-local function check_err(err)
+function M.check_err(err)
 	if not err then
 		return constants.fs_err.NONE
 	elseif err:match('^EEXIST') then
 		return constants.fs_err.EXISTS
 	elseif err:match('^ENOENT') then
 		return constants.fs_err.NOENTRY
+	elseif err:match('^ENOTEMPTY') then
+		return constants.fs_err.NOTEMPTY
 	end
 
 	return constants.fs_err.OTHER
@@ -71,7 +73,7 @@ local function do_mkdir_p(path, mode)
 	local parent = path
 	local fs_err = constants.fs_err
 	local err, type = await_stat(parent)
-	local check = check_err(err)
+	local check = M.check_err(err)
 	local dir_exists = get_dir_exists(check, type)
 
 	if not dir_exists and check ~= fs_err.NOENTRY then
@@ -86,7 +88,7 @@ local function do_mkdir_p(path, mode)
 		if parent == path or not parent then return err, false end
 
 		err, type = await_stat(parent)
-		check = check_err(err)
+		check = M.check_err(err)
 		dir_exists = get_dir_exists(check, type)
 
 		if not dir_exists and check ~= fs_err.NOENTRY then
@@ -97,7 +99,7 @@ local function do_mkdir_p(path, mode)
 	local success
 	for _, dir in ipairs(dirs) do
 		err, success = await_mkdir(dir, mode)
-		if not success and check_err(err) ~= fs_err.EXISTS then
+		if not success and M.check_err(err) ~= fs_err.EXISTS then
 			return err, success
 		end
 	end
@@ -211,10 +213,8 @@ function M.win_valid(id)
 end
 
 function M.get_last_win_buf()
-	local g_utils = require('nvim-ideify.utils')
-	local g_state = require('nvim-ideify.state')
-	local last_win = g_utils.win_valid(g_state.wins.last) and g_state.wins.last
-	return vim.api.nvim_win_get_buf(last_win or g_state.wins.main)
+	local last_win = M.win_valid(state.wins.last) and state.wins.last
+	return vim.api.nvim_win_get_buf(last_win or state.wins.main)
 end
 
 function M.set_last_win_buf(buf)

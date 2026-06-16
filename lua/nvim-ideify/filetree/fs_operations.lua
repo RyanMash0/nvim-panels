@@ -7,6 +7,12 @@ local ui = require('nvim-ideify.filetree.ui')
 local utils = require('nvim-ideify.filetree.utils')
 local async = require('nvim-ideify.filetree.async')
 
+local function print_errors(err_log)
+	for _, item in ipairs(err_log) do
+		vim.notify(item.err, vim.log.levels.ERROR)
+	end
+end
+
 function M.rename()
 	local path, _ = utils.get_current_entry()
 	local dirname = vim.fs.dirname(path)
@@ -19,10 +25,14 @@ function M.rename()
 			coroutine.wrap(function()
 				local new_path = vim.fs.joinpath(dirname, input)
 
-				local err_log = async.await_move_multi({ { path, new_path }, })
+				local err_log, path_log = async.await_move_multi({ { path, new_path }, })
+				print_errors(err_log)
 
-				state.update_item(path, new_path)
-				ui.render()
+				if path_log and path_log[1] then
+					state.update_item(path_log[1][1], path_log[1][2])
+				end
+
+				vim.schedule(ui.render)
 			end)()
 		end
 	)
@@ -33,14 +43,16 @@ local function get_delete_prompt(path)
 	local cwd = vim.uv.cwd() or vim.fn.getcwd()
 	local relpath = vim.fs.relpath(cwd, path)
 	local confirm = constants.confirm
+	local prompt_prefix = 'Confirm (RECURSIVE) deletion of <'
+	local prompt_suffix = '> ([Y]es, [n]o, [a]ll): '
 	vim.ui.input(
 		{
-			prompt = 'Confirm (RECURSIVE) deletion of <' .. relpath .. '> ([Y]es, [n]o, [a]ll): ',
+			prompt = prompt_prefix .. relpath .. prompt_suffix,
 		},
 		function(input)
 			if input == nil then input = 'N'
 			elseif input == '' then input = 'Y'
-			else input = input:sub(1, 1):lower() end
+			else input = input:sub(1, 1):upper() end
 
 			if not confirm[input] then
 				vim.notify('Invalid input', vim.log.levels.ERROR)
@@ -71,15 +83,40 @@ function M.delete()
 				basename = vim.fs.basename(path)
 				new_path = vim.fs.joinpath(trash_path, basename)
 				table.insert(items, { path, new_path })
-				state.update_item(path, nil)
 			end
 		end
 
-		local err_log = async.await_move_multi(items)
+		local err_log, path_log = async.await_move_multi(items)
+		print_errors(err_log)
 
-		state.clear_marked()
-		ui.render()
-		vim.notify('Items successfully moved to ~' .. g_constants.rel_trash_path, vim.log.levels.INFO)
+		if path_log then
+			for _, item in ipairs(path_log) do
+				state.update_item(item[1], nil)
+			end
+		end
+
+		local item_str
+		if #path_log == 1 and #err_log == 0 then
+			item_str = 'Item '
+		elseif #path_log > 1  and #err_log == 0 then
+			item_str = 'Items '
+		elseif #path_log == 1 and #err_log > 0 then
+			item_str = 'One item '
+		elseif #path_log > 1  and #err_log > 0 then
+			item_str = 'Some items '
+		end
+
+		if #path_log >= 1 then
+			vim.notify(
+				item_str ..
+				'successfully moved to ~' ..
+				g_constants.rel_trash_path,
+				vim.log.levels.INFO
+			)
+		end
+
+		vim.schedule(state.clear_marked)
+		vim.schedule(ui.render)
 	end)()
 end
 
@@ -93,26 +130,38 @@ function M.move()
 			basename = vim.fs.basename(path)
 			new_path = vim.fs.joinpath(target, basename)
 			table.insert(items, { path, new_path })
-			state.update_item(path, new_path)
 		end
 
-		local err_log = async.await_move_multi(items)
+		local err_log, path_log = async.await_move_multi(items)
 
-		state.clear_marked()
-		ui.render()
+		print_errors(err_log)
+		if path_log then
+			for _, item in ipairs(path_log) do
+				state.update_item(item[1], item[2])
+			end
+		end
+
+		vim.schedule(state.clear_marked)
+		vim.schedule(ui.render)
 	end)()
 end
 
 function M.copy()
 	local target = state.get_target()
+	local err_logs = {}
 	coroutine.wrap(function()
-		local err_logs = {}
 		for path in state.sources_iterator() do
 			table.insert(err_logs, async.await_copy_recursive(path, target))
 		end
 
-		state.clear_marked()
-		ui.render()
+		for i, _ in ipairs(err_logs) do
+			for _, item in ipairs(err_logs[i]) do
+				print_errors(item)
+			end
+		end
+
+		vim.schedule(state.clear_marked)
+		vim.schedule(ui.render)
 	end)()
 end
 
@@ -127,8 +176,12 @@ function M.file_new()
 			coroutine.wrap(function()
 				local new_path = vim.fs.joinpath(target, input)
 				local err, success = async.await_create_file(new_path)
-				state.remove_target()
-				ui.render()
+				if err then
+					print_errors({ { err = err, success = success } })
+				end
+
+				vim.schedule(state.clear_marked)
+				vim.schedule(ui.render)
 			end)()
 		end
 	)
@@ -145,8 +198,12 @@ function M.dir_new()
 			coroutine.wrap(function()
 				local new_path = vim.fs.joinpath(target, input)
 				local err, success = async.await_mkdir(new_path)
-				state.remove_target()
-				ui.render()
+				if err then
+					print_errors({ { err = err, success = success } })
+				end
+
+				vim.schedule(state.clear_marked)
+				vim.schedule(ui.render)
 			end)()
 		end
 	)

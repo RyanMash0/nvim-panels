@@ -27,7 +27,8 @@ M.fs_err = {
 	NONE = 0,
 	EXISTS = 1,
 	NOENTRY = 2,
-	OTHER = 3,
+	NOTEMPTY = 3,
+	OTHER = 4,
 }
 
 M.rel_trash_path = '/.local/share/Trash/nvim-ideify'

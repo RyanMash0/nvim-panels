@@ -1,6 +1,6 @@
 local M = {}
 
-function M.new_error_log()
+function M.new_log()
 	local data = {}
 	return {
 		add_data = function(new_data)
@@ -12,7 +12,19 @@ function M.new_error_log()
 	}
 end
 
-function M.new_process_counter(co, err_log)
+function M.new_verifier()
+	local data = {}
+	return {
+		add_data = function(item)
+			data[item] = true
+		end,
+		verify = function(item)
+			return data[item]
+		end,
+	}
+end
+
+function M.new_process_counter(co, log, extra_log)
 	local count = 0
 	return {
 		increment = function()
@@ -21,7 +33,13 @@ function M.new_process_counter(co, err_log)
 		decrement = function()
 			count = count - 1
 			if count == 0 then
-				vim.schedule(function() coroutine.resume(co, err_log.get_data()) end)
+				vim.schedule(function()
+					coroutine.resume(
+						co,
+						log.get_data(),
+						extra_log and extra_log.get_data()
+					)
+				end)
 			end
 		end,
 		get = function()
@@ -32,7 +50,7 @@ end
 
 function M.await_get_items_recursive(start_path, start_target)
 	local co = coroutine.running()
-	local err_log = M.new_error_log()
+	local err_log = M.new_log()
 	local count = M.new_process_counter(co, err_log)
 
 	local dirs = {}
@@ -90,7 +108,7 @@ end
 
 function M.await_mkdir_multi(dirs)
 	local co = coroutine.running()
-	local err_log = M.new_error_log()
+	local err_log = M.new_log()
 	local count = M.new_process_counter(co, err_log)
 	for _, dir in ipairs(dirs) do
 		count.increment()
@@ -108,7 +126,7 @@ end
 
 function M.await_copy_multi(files)
 	local co = coroutine.running()
-	local err_log = M.new_error_log()
+	local err_log = M.new_log()
 	local count = M.new_process_counter(co, err_log)
 	for _, file in ipairs(files) do
 		count.increment()
@@ -126,7 +144,7 @@ end
 
 function M.await_copy_recursive(path, target)
 	local stat, err = vim.uv.fs_stat(path)
-	if err or not stat then return end
+	if err or not stat then return {} end
 
 	local err_logs = {}
 	local basename = vim.fs.basename(path)
@@ -172,21 +190,58 @@ function M.await_mkdir(path)
 	return coroutine.yield()
 end
 
+function M.await_stat(path)
+	local co = coroutine.running()
+	vim.uv.fs_stat(path, function(err, stat)
+		if err or not stat then
+			vim.schedule(function() coroutine.resume(co, false) end)
+			return
+		end
+
+		vim.schedule(function() coroutine.resume(co, true) end)
+	end)
+	return coroutine.yield()
+end
+
+function M.await_unique_path(path, path_verifier)
+	local new_path = path
+	local base_name = vim.fs.basename(path)
+	local dir_name = vim.fs.dirname(path)
+	local item_name = base_name:match('^%.*[^%.]*')
+	local prefix = vim.fs.joinpath(dir_name, item_name)
+	local suffix = base_name:gsub('^%.*[^%.]*', '')
+	local identifier
+	local count = 1
+	while M.await_stat(new_path) or path_verifier.verify(new_path) do
+		count = count + 1
+		identifier = ' (' .. tostring(count) .. ')'
+		new_path = prefix .. identifier .. suffix
+	end
+	path_verifier.add_data(new_path)
+	return new_path
+end
+
 function M.await_move_multi(items)
 	local co = coroutine.running()
-	local err_log = M.new_error_log()
-	local count = M.new_process_counter(co, err_log)
+	local err_log = M.new_log()
+	local path_log = M.new_log()
+	local path_verifier = M.new_verifier()
+	local count = M.new_process_counter(co, err_log, path_log)
+
 	for _, item in ipairs(items) do
+		item[2] = M.await_unique_path(item[2], path_verifier)
 		count.increment()
 		vim.uv.fs_rename(item[1], item[2], function(err, success)
 			if err or not success then
 				err_log.add_data({ err = err, success = success, path = item[1] })
+			else
+				path_log.add_data(item)
 			end
 			count.decrement()
 		end)
 	end
 
-	if count.get() == 0 then return {} end
+	if count.get() == 0 then return {}, {} end
 	return coroutine.yield()
 end
 

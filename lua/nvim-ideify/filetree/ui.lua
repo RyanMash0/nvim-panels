@@ -180,6 +180,7 @@ function M.action()
 			vim.cmd.edit({ args = { parent.path } })
 		else
 			g_utils.set_last_win_buf(new_buf)
+			vim.bo[new_buf].buflisted = true
 		end
 		vim.api.nvim_set_current_win(state.get_window())
 		return

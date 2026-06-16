@@ -49,7 +49,7 @@ function M.setup(opts)
 end
 
 function M.add_highlights()
-	local yank_hl_pre = vim.api.nvim_get_hl(0, { name = 'Blue' })
+	local yank_hl_pre = vim.api.nvim_get_hl(0, { name = 'Green' })
 	local yank_hl = {}
 	for key, val in pairs(yank_hl_pre) do
 		yank_hl[key] = val
@@ -64,7 +64,7 @@ function M.add_highlights()
 	-- close_hl.reverse = true
 	close_hl.dim = true
 
-	local modified_hl_pre = vim.api.nvim_get_hl(0, { name = 'Green' })
+	local modified_hl_pre = vim.api.nvim_get_hl(0, { name = 'Blue' })
 	local modified_hl = {}
 	for key, val in pairs(modified_hl_pre) do
 		modified_hl[key] = val

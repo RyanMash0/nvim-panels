@@ -83,13 +83,19 @@ end
 vim.api.nvim_create_augroup('IDEify', { clear = true })
 vim.api.nvim_create_autocmd('WinEnter', {
 	group = 'IDEify',
-	callback = function()
+	callback = function(args)
 		local state = require('nvim-ideify.state')
 		local utils = require('nvim-ideify.utils')
 
 		local win = vim.api.nvim_get_current_win()
 
-		if not utils.is_plugin_win(win) then
+		local buf = args.buf
+		local buf_type = vim.bo[buf].buftype
+		local check_id = not (buf <= 5 and buf >= 2)
+		local check_type = buf_type ~= 'terminal' and
+			buf_type ~= 'help' and buf_type ~= 'quickfix' and
+			buf_type ~= 'nofile' and buf_type ~= 'prompt'
+		if not utils.is_plugin_win(win) and check_id and check_type then
 			state.wins.last = win
 		end
 	end,

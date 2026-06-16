@@ -170,8 +170,8 @@ function M.render()
 		file_name = vim.fs.basename(buf_name)
 
 		if minimal then
-			dir_name = file_name:match('^[^%.]+') or ''
-			file_name = file_name:gsub('[^%.]+', '') or ''
+			dir_name = file_name:match('^%.*[^%.]*') or ''
+			file_name = file_name:gsub('^%.*[^%.]*', '') or ''
 		else
 			file_name = truncate_end(file_name, truncate_len)
 		end
