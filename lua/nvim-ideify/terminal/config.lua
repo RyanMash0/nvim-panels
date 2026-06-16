@@ -10,6 +10,7 @@ M.defaults = {
 		buflisted = false,
 	},
 	keymaps = {
+		esc = '<Esc>',
 		add = 'ba',
 		delete = 'bd',
 	},

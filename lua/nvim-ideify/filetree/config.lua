@@ -13,7 +13,7 @@ M.defaults = {
 	},
 	show_keymaps = true,
 	header = function() return nil end,
-	keymaps = {
+	keymaps_info = {
 		' ┌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐',
 		' ╎ Keymaps:                  ╎',
 		' ├╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┤',
@@ -36,6 +36,28 @@ M.defaults = {
 		' ╎                           ╎',
 		' ╎ [t]oggle this menu        ╎',
 		' └╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┘',
+	},
+	keymaps = {
+		move = 'M',
+		rename = 'R',
+		copy = 'C',
+		delete = 'D',
+		new_file = 'Nf',
+		new_dir = 'Nd',
+		mark_target = 'mt',
+		mark_source = 'ms',
+		clear_marked = '<Esc>',
+		go_to_dir = 'G',
+		refresh = 'r',
+		expand_target = 'et',
+		close_target = 'ct',
+		close_all = 'ca',
+		toggle_keymaps = 't',
+		ascend = '-',
+		action = '<CR>',
+		action_alt= '<C-M>',
+		descend = '<S-CR>',
+		descend_alt = '<S-C-M>',
 	},
 }
 

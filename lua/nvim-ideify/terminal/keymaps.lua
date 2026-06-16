@@ -6,21 +6,19 @@ local state = require('nvim-ideify.terminal.state')
 local utils = require('nvim-ideify.terminal.utils')
 
 function M.setup()
+	local opts = { remap = false }
+	local keys = config.options.keymaps
+
 	local function generate_switch(num)
 		return function() utils.buffer_switch(num) end
 	end
 
-	local add = config.options.keymaps.add
-	local delete = config.options.keymaps.delete
-
-	local opts = { remap = false }
-
 	for _, buf in state.buf_iterator() do
 		opts.buffer = buf
-		vim.keymap.set('t', '<Esc>', '<C-\\><C-n>', opts)
 
-		vim.keymap.set('n', add, utils.buffer_add, opts)
-		vim.keymap.set('n', delete, utils.buffer_delete, opts)
+		vim.keymap.set('t', keys.esc, '<C-\\><C-n>', opts)
+		vim.keymap.set('n', keys.add, utils.buffer_add, opts)
+		vim.keymap.set('n', keys.delete, utils.buffer_delete, opts)
 
 		for i = 1, constants.MAX_BUFFERS do
 			pcall(vim.keymap.del,'n', tostring(i - 1), { buf = buf })

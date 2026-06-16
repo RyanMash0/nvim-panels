@@ -8,57 +8,59 @@ local utils = require('nvim-ideify.filetree.utils')
 
 function M.setup()
 	local opts = { buffer = state.get_buffer(), expr = false, remap = false, }
-	local action = vim.schedule_wrap(ui.action)
-	local make = vim.schedule_wrap(ui.render)
-	local descend = vim.schedule_wrap(ui.descend)
-	local ascend = vim.schedule_wrap(ui.ascend)
-	local close = function()
+	local keys = config.options.keymaps
+
+	local move = fs_operations.move
+	local rename = fs_operations.rename
+	local copy = fs_operations.copy
+	local delete = fs_operations.delete
+	local new_file = fs_operations.new_file
+	local new_dir = fs_operations.new_dir
+	local target = utils.mark_target
+	local source = utils.mark_source
+	local clear = function()
+		state.clear_marked()
+		vim.schedule(ui.render)
+	end
+	local go_to_dir = utils.go_to_dir
+	local refresh = vim.schedule_wrap(ui.render)
+	local expand_target = utils.open_subdirectories
+	local close_target = utils.close_subdirectories
+	local close_all = function()
 		for path in state.expanded_iterator() do
 			utils.unmark_subdirectories(path)
 		end
 		state.clear_expanded()
 		vim.schedule(ui.render)
 	end
-	local rename = fs_operations.rename
-	local delete = fs_operations.delete
-	local esc = function()
-		state.clear_marked()
-		vim.schedule(ui.render)
-	end
-	local toggle = function()
+	local toggle_keymaps = function()
 		config.options.show_keymaps = not config.options.show_keymaps
 		vim.schedule(ui.render)
 	end
-	local target = utils.mark_target
-	local source = utils.mark_source
-	local move = fs_operations.move
-	local copy = fs_operations.copy
-	local file_new = fs_operations.file_new
-	local dir_new = fs_operations.dir_new
-	local expand_level = utils.open_subdirectories
-	local close_level = utils.close_subdirectories
-	local change_dir = utils.go_to_dir
+	local ascend = vim.schedule_wrap(ui.ascend)
+	local action = vim.schedule_wrap(ui.action)
+	local descend = vim.schedule_wrap(ui.descend)
 
-	vim.keymap.set('n', 'G', change_dir, opts)
-	vim.keymap.set('n', 'mt', target, opts)
-	vim.keymap.set('n', 'ms', source, opts)
-	vim.keymap.set('n', '<Esc>', esc, opts)
-	vim.keymap.set('n', 'C', copy, opts)
-	vim.keymap.set('n', 'Nd', dir_new, opts)
-	vim.keymap.set('n', 'Nf', file_new, opts)
-	vim.keymap.set('n', 'M', move, opts)
-	vim.keymap.set('n', 'D', delete, opts)
-	vim.keymap.set('n', 'R', rename, opts)
-	vim.keymap.set('n', 'ca', close, opts)
-	vim.keymap.set('n', 'ct', close_level, opts)
-	vim.keymap.set('n', 'et', expand_level, opts)
-	vim.keymap.set('n', 'r', make, opts)
-	vim.keymap.set('n', 't', toggle, opts)
-	vim.keymap.set('n', '-', ascend, opts)
-	vim.keymap.set('n', '<CR>', action, opts)
-	vim.keymap.set('n', '<S-CR>', descend, opts)
-	vim.keymap.set('n', '<C-M>', action, opts)
-	vim.keymap.set('n', '<S-C-M>', descend, opts)
+	vim.keymap.set('n', keys.move, move, opts)
+	vim.keymap.set('n', keys.rename, rename, opts)
+	vim.keymap.set('n', keys.copy, copy, opts)
+	vim.keymap.set('n', keys.delete, delete, opts)
+	vim.keymap.set('n', keys.new_file, new_file, opts)
+	vim.keymap.set('n', keys.new_dir, new_dir, opts)
+	vim.keymap.set('n', keys.mark_target, target, opts)
+	vim.keymap.set('n', keys.mark_source, source, opts)
+	vim.keymap.set('n', keys.clear_marked, clear, opts)
+	vim.keymap.set('n', keys.go_to_dir, go_to_dir, opts)
+	vim.keymap.set('n', keys.refresh, refresh, opts)
+	vim.keymap.set('n', keys.expand_target, expand_target, opts)
+	vim.keymap.set('n', keys.close_target, close_target, opts)
+	vim.keymap.set('n', keys.close_all, close_all, opts)
+	vim.keymap.set('n', keys.toggle_keymaps, toggle_keymaps, opts)
+	vim.keymap.set('n', keys.ascend, ascend, opts)
+	vim.keymap.set('n', keys.action, action, opts)
+	vim.keymap.set('n', keys.action_alt, action, opts)
+	vim.keymap.set('n', keys.descend, descend, opts)
+	vim.keymap.set('n', keys.descend_alt, descend, opts)
 
 	state.set_on_click(action)
 end

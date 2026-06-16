@@ -31,6 +31,19 @@ M.defaults = {
 			}
 		},
 	},
+	keymaps = {
+		action = '<CR>',
+		action_alt = '<C-M>',
+		clear_yanked = '<Esc>',
+		yank = 'y',
+		put_after = 'p',
+		put_before = 'P',
+		toggle_minimal = 'm',
+		scroll_right = 'w',
+		scroll_left = 'b',
+		mouse_scroll_right = '<S-ScrollWheelUp>',
+		mouse_scroll_left = '<S-ScrollWheelDown>',
+	},
 }
 
 M.options = vim.deepcopy(M.defaults)

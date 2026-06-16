@@ -120,7 +120,7 @@ function M.get_full_header()
 	local header = config.options.header() or M.get_default_header()
 
 	if config.options.show_keymaps then
-		for _, line in pairs(config.options.keymaps) do
+		for _, line in pairs(config.options.keymaps_info) do
 			table.insert(header, line)
 		end
 	end

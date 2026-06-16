@@ -163,7 +163,7 @@ function M.copy()
 	end)()
 end
 
-function M.file_new()
+function M.new_file()
 	local target = state.get_target()
 
 	vim.ui.input(
@@ -185,7 +185,7 @@ function M.file_new()
 	)
 end
 
-function M.dir_new()
+function M.new_dir()
 	local target = state.get_target()
 
 	vim.ui.input(
