@@ -35,8 +35,6 @@
 ---@field set_window fun(winid: nvim-ideify.win_id)
 ---@field get_buffer fun(): nvim-ideify.buf_id
 ---@field set_buffer fun(bufnr: nvim-ideify.buf_id)
----@field get_win_config fun(): nvim-ideify.win_config
----@field set_win_config fun(config: nvim-ideify.win_config)
 ---@field get_on_click fun(): fun()
 
 ---@class nvim-ideify.module.ui

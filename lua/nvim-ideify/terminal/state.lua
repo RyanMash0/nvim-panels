@@ -6,7 +6,6 @@ local constants = require('nvim-ideify.terminal.constants')
 
 local buffer = g_constants.NOID
 local window = g_constants.NOID
-local win_config = {}
 local on_click = nil
 
 local pos_to_buf = {}
@@ -28,14 +27,6 @@ end
 
 function M.set_window(win_id)
 	window = win_id
-end
-
-function M.get_win_config()
-	return win_config
-end
-
-function M.set_win_config(config)
-	win_config = config
 end
 
 function M.get_on_click()

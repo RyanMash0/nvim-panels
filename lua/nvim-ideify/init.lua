@@ -62,7 +62,6 @@ function M.panel_swap(position1, position2)
 
 	local active = state.active
 
-	ui.hide()
 	if active then ui.show() end
 end
 

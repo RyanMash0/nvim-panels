@@ -242,6 +242,23 @@ local function hide_panel(position)
 	panel_state.set_window(constants.NOID)
 end
 
+local function get_module_buf_config(mod_constants)
+	return vim.deepcopy(mod_constants.config.buffer)
+end
+
+local function get_module_win_config(mod_constants, position, panel)
+	local pos = constants.position
+	local win_conf = vim.deepcopy(mod_constants.config.window)
+	win_conf.split = utils.position_to_split(position)
+	if position == pos.LEFT or position == pos.RIGHT then
+		win_conf.vertical = true
+		win_conf.width = panel.width
+	else
+		win_conf.height = panel.height
+	end
+	return win_conf
+end
+
 local function open_panel(position)
 	local panel = get_panel_from_position(position)
 	local panel_g_conf = config.options.layout[position]
@@ -256,23 +273,13 @@ local function open_panel(position)
 	local mod_state = module.get_state()
 	local mod_ui = module.get_ui()
 
-	local buf_conf = vim.deepcopy(mod_constants.config.buffer)
-
-	local pos = constants.position
-	local win_conf = vim.deepcopy(mod_constants.config.window)
-	win_conf.split = utils.position_to_split(position)
-	if position == pos.LEFT or position == pos.RIGHT then
-		win_conf.vertical = true
-		win_conf.width = panel.width
-	else
-		win_conf.height = panel.height
-	end
+	local buf_conf = get_module_buf_config(mod_constants)
+	local win_conf = get_module_win_config(mod_constants, position, panel)
 
 	local buf = vim.api.nvim_create_buf(buf_conf.listed, buf_conf.scratch)
 	mod_state.set_buffer(buf)
 
 	local win = vim.api.nvim_open_win(buf, false, win_conf)
-	mod_state.set_win_config(win_conf)
 	mod_state.set_window(win)
 
 	local buf_opts = mod_conf.options.buffer
@@ -289,14 +296,15 @@ local function unhide_panel(position)
 	local panel = get_panel_from_position(position)
 	local panel_g_conf = config.options.layout[position]
 	local module = panel.module()
-	if not module or panel_g_conf and panel_g_conf.hidden then
+	if not module or (panel_g_conf and panel_g_conf.hidden) then
 		return
 	end
 
 	local mod_conf = module.get_config()
+	local mod_constants = module.get_constants()
 	local mod_state = module.get_state()
 
-	local win_conf = mod_state.get_win_config()
+	local win_conf = get_module_win_config(mod_constants, position, panel)
 
 	local buf = mod_state.get_buffer()
 	if not utils.buf_valid(buf) then return end
@@ -423,23 +431,16 @@ local function panel_size_reset(position)
 		return
 	end
 
+	local mod_constants = module.get_constants()
 	local mod_state = module.get_state()
 	local mod_win = mod_state.get_window()
+
 	if not utils.win_valid(mod_win) then
 		open_panel(position)
 		return
 	end
 
-	local pos = constants.position
-	local win_conf = mod_state.get_win_config()
-	win_conf.split = utils.position_to_split(position)
-	if position == pos.LEFT or position == pos.RIGHT then
-		win_conf.vertical = true
-		win_conf.width = panel.width
-	else
-		win_conf.height = panel.height
-	end
-	mod_state.set_win_config(win_conf)
+	local win_conf = get_module_win_config(mod_constants, position, panel)
 
 	vim.api.nvim_win_set_config(mod_win, win_conf)
 	utils.check_or_make_main_win()

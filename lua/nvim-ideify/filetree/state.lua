@@ -4,7 +4,6 @@ local g_constants = require('nvim-ideify.constants')
 
 local buffer = g_constants.NOID
 local window = g_constants.NOID
-local win_config = {}
 local on_click = nil
 
 local header_height = 0
@@ -28,14 +27,6 @@ end
 
 function M.set_window(win_id)
 	window = win_id
-end
-
-function M.get_win_config()
-	return win_config
-end
-
-function M.set_win_config(config)
-	win_config = config
 end
 
 function M.get_on_click()
