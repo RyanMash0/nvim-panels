@@ -47,16 +47,6 @@ function M.panel_swap(position1, position2)
 	local tmp_module1 = panel_confs[position1].module
 	local tmp_module2 = panel_confs[position2].module
 
-	local base_config
-	if tmp_module1() then
-		base_config = tmp_module1().get_constants().config.window
-		tmp_module1().get_state().set_win_config(base_config)
-	end
-	if tmp_module2() then
-		base_config = tmp_module2().get_constants().config.window
-		tmp_module2().get_state().set_win_config(base_config)
-	end
-
 	panel_confs[position1].module = tmp_module2
 	panel_confs[position2].module = tmp_module1
 
