@@ -11,11 +11,14 @@ function M.go_to_dir()
 		prompt = "Path: ",
 		completion = 'file',
 	}, function(input)
-		if vim.fn.isdirectory(input) ~= 1 then
+		local path = vim.fs.normalize(input)
+		path = vim.fs.abspath(input)
+		local stat, err = vim.uv.fs_stat(path)
+
+		if err or not stat then
 			vim.notify('Invalid Directory', vim.log.levels.ERROR)
 			return
 		end
-		local path = vim.fs.abspath(input)
 		ui.change_dir(path)
 	end)
 end

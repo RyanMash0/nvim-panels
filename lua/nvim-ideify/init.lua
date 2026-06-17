@@ -37,7 +37,7 @@ function M.panel_toggle(direction)
 	if not panel_confs[direction] then return end
 
 	panel_confs[direction].hidden = not panel_confs[direction].hidden
-	if state.active then ui.open() end
+	if state.active then ui.show() end
 end
 
 function M.panel_swap(position1, position2)
@@ -62,8 +62,8 @@ function M.panel_swap(position1, position2)
 
 	local active = state.active
 
-	ui.close()
-	if active then ui.open() end
+	ui.hide()
+	if active then ui.show() end
 end
 
 function M.panel_resize(position, size)

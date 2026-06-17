@@ -1,9 +1,9 @@
 -------------------------------------------------------------------------------
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
-? grn across multiple buffers sometimes causes errors with the buffer bar
-- Buffer bar highlighting goes away
+? Multi delete does not rerender file tree
 - Resizing terminal with command does not refresh statusline
+- Buffer bar path when changing parent directory
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
