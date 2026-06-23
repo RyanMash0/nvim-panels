@@ -1,3 +1,4 @@
+---@class nvim-ideify.constants
 local M = {}
 
 ---@enum nvim-ideify.position
@@ -31,7 +32,20 @@ M.fs_err = {
 	OTHER = 4,
 }
 
----@type table<integer, boolean>
+---@enum nvim-ideify.fs_type
+M.fs_type = {
+	HEADER = 'header',
+	FILE = 'file',
+	DIRECTORY = 'directory',
+	LINK = 'link',
+	FIFO = 'other',
+	SOCKET = 'socket',
+	CHAR = 'char',
+	BLOCK = 'block',
+	UNKNOWN = 'unknown',
+}
+
+---@type table<nvim-ideify.buf_id, boolean>
 M.ui2_buffers = {
 	[2] = true,
 	[3] = true,

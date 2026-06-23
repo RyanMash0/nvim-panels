@@ -1,6 +1,7 @@
 local M = {}
 
 local g_config = require('nvim-ideify.config')
+local g_constants = require('nvim-ideify.constants')
 
 function M.new_log()
 	local data = {}
@@ -89,6 +90,7 @@ end
 function M.await_get_items_recursive(start_path, start_new_path, err_log)
 	local co = coroutine.running()
 	local count = M.new_process_counter(co, err_log)
+	local fs_type = g_constants.fs_type
 
 	local dirs = {}
 	local files = {}
@@ -115,9 +117,9 @@ function M.await_get_items_recursive(start_path, start_new_path, err_log)
 			for name, type in dir_iterator do
 				subpath = vim.fs.joinpath(path, name)
 				new_subpath = vim.fs.joinpath(new_path, name)
-				if type == 'directory' then
+				if type == fs_type.DIRECTORY then
 					table.insert(dirs[cur], { subpath, new_subpath })
-				elseif type == 'file' or type == 'link' then
+				elseif type == fs_type.FILE or type == fs_type.LINK then
 					table.insert(files, { subpath, new_subpath })
 				end
 			end
@@ -186,12 +188,13 @@ function M.await_copy_recursive(path, target)
 	local stat, err = vim.uv.fs_stat(path)
 	if err or not stat then return { { err = err, success = false } }, {} end
 
+	local fs_type = g_constants.fs_type
 	local err_log = M.new_log()
 	local path_log = M.new_log()
 	local basename = vim.fs.basename(path)
 	local new_path = vim.fs.joinpath(target, basename)
 	new_path = M.await_unique_path(new_path)
-	if stat.type == 'file' or stat.type == 'link' then
+	if stat.type == fs_type.FILE or stat.type == fs_type.LINK then
 		return M.await_copy_multi({ { path, new_path, } }, err_log, path_log, true)
 	end
 

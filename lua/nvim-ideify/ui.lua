@@ -5,10 +5,6 @@ local constants = require('nvim-ideify.constants')
 local state = require('nvim-ideify.state')
 local utils = require('nvim-ideify.utils')
 
-M.windows = {}
-M.height_ratio = 1
-M.width_ratio = 1
-
 local function get_on_click()
 	return function()
 		local win = vim.fn.getmousepos().winid
@@ -81,16 +77,16 @@ local function add_windows(forest, parents, depth)
 			end
 
 			if win_config.height then
-				win_config.height = math.floor(win_config.height * M.height_ratio)
+				win_config.height = math.floor(win_config.height * state.height_ratio)
 			end
 			if win_config.width then
-				win_config.width = math.floor(win_config.width * M.width_ratio)
+				win_config.width = math.floor(win_config.width * state.width_ratio)
 			end
 
 			win_buf = vim.api.nvim_win_get_buf(leaf[2])
 
 			if win_config.focusable then
-				table.insert(M.windows[depth], {
+				table.insert(state.editor_wins[depth], {
 					parent = parents[i],
 					config = win_config,
 					buffer = win_buf,
@@ -106,7 +102,7 @@ local function add_windows(forest, parents, depth)
 	end
 
 	if #new_forest > 0 then
-		M.windows[depth + 1] = {}
+		state.editor_wins[depth + 1] = {}
 		add_windows(new_forest, new_parents, depth + 1)
 	end
 end
@@ -115,7 +111,7 @@ local function parse_layout()
 	local win_tree = vim.fn.winlayout()
 	local root_leaf = leftmost_leaf(win_tree)
 	state.wins.main = root_leaf[2]
-	M.windows = {}
+	state.editor_wins = {}
 
 	if win_tree == root_leaf then return end
 	local left = config.options.layout.left
@@ -134,8 +130,8 @@ local function parse_layout()
 
 	local width_reduction = l_width + r_width
 	local height_reduction = t_height + b_height
-	M.width_ratio = (vim.o.columns - width_reduction) / vim.o.columns
-	M.height_ratio = (vim.o.lines - height_reduction) / vim.o.lines
+	state.width_ratio = (vim.o.columns - width_reduction) / vim.o.columns
+	state.height_ratio = (vim.o.lines - height_reduction) / vim.o.lines
 
 	local initial_entry = {
 		parent = nil,
@@ -143,7 +139,7 @@ local function parse_layout()
 		buffer = nil,
 		id = state.wins.main,
 	}
-	M.windows = { { initial_entry } }
+	state.editor_wins = { { initial_entry } }
 	add_windows({ win_tree }, { { 1, 1, root_leaf } }, 1)
 end
 
@@ -163,7 +159,7 @@ local function close_wins()
 end
 
 local function get_parent(win)
-	return M.windows[win.parent[1]][win.parent[2]]
+	return state.editor_wins[win.parent[1]][win.parent[2]]
 end
 
 local function open_wins()
@@ -174,24 +170,24 @@ local function open_wins()
 	local prev_parent
 	utils.check_or_make_main_win()
 	vim.api.nvim_set_current_win(state.wins.main)
-	if #M.windows == 0 then return end
+	if #state.editor_wins == 0 then return end
 
-	for j = 2, #M.windows[1] do
-		win = M.windows[1][j]
+	for j = 2, #state.editor_wins[1] do
+		win = state.editor_wins[1][j]
 		win_id = vim.api.nvim_open_win(win.buffer, true, win.config)
 		win.id = win_id
 	end
 
-	for i = 2, #M.windows do
-		win = M.windows[i][1]
+	for i = 2, #state.editor_wins do
+		win = state.editor_wins[i][1]
 		parent = get_parent(win)
 		vim.api.nvim_set_current_win(parent.id)
 		win_id = vim.api.nvim_open_win(win.buffer, true, win.config)
 		win.id = win_id
-		for j = 2, #M.windows[i] do
-			prev_win = M.windows[i][j - 1]
+		for j = 2, #state.editor_wins[i] do
+			prev_win = state.editor_wins[i][j - 1]
 			prev_parent = get_parent(prev_win)
-			win = M.windows[i][j]
+			win = state.editor_wins[i][j]
 			parent = get_parent(win)
 			if parent.id ~= prev_parent.id then
 				vim.api.nvim_set_current_win(parent.id)
@@ -322,10 +318,9 @@ function M.close()
 	state.active = false
 	state.opened = false
 
-	close_panel(config.options.split_order.first)
-	close_panel(config.options.split_order.second)
-	close_panel(config.options.split_order.third)
-	close_panel(config.options.split_order.fourth)
+	for _, panel in ipairs(config.options.split_order) do
+		close_panel(panel)
+	end
 
 	if state.equalalways then
 		vim.opt.equalalways = true
@@ -340,10 +335,9 @@ function M.open()
 	parse_layout()
 	close_wins()
 
-	open_panel(config.options.split_order.first)
-	open_panel(config.options.split_order.second)
-	open_panel(config.options.split_order.third)
-	open_panel(config.options.split_order.fourth)
+	for _, panel in ipairs(config.options.split_order) do
+		open_panel(panel)
+	end
 
 	local key_opts = { expr = true, remap = false }
 	vim.keymap.set('n', '<LeftMouse>', get_on_click(), key_opts)
@@ -358,10 +352,9 @@ function M.hide()
 
 	state.active = false
 
-	hide_panel(config.options.split_order.first)
-	hide_panel(config.options.split_order.second)
-	hide_panel(config.options.split_order.third)
-	hide_panel(config.options.split_order.fourth)
+	for _, panel in ipairs(config.options.split_order) do
+		hide_panel(panel)
+	end
 
 	if state.equalalways then
 		vim.opt.equalalways = true
@@ -380,10 +373,9 @@ function M.show()
 	parse_layout()
 	close_wins()
 
-	unhide_panel(config.options.split_order.first)
-	unhide_panel(config.options.split_order.second)
-	unhide_panel(config.options.split_order.third)
-	unhide_panel(config.options.split_order.fourth)
+	for _, panel in ipairs(config.options.split_order) do
+		unhide_panel(panel)
+	end
 
 	local key_opts = { expr = true, remap = false }
 	vim.keymap.set('n', '<LeftMouse>', get_on_click(), key_opts)
@@ -421,40 +413,6 @@ function M.module_buf_reload(module)
 
 	mod_ui.render()
 	mod_keys.setup()
-end
-
-local function panel_size_reset(position)
-	local panel = get_panel_from_position(position)
-	local panel_g_conf = config.options.layout[position]
-	local module = panel.module()
-	if not module or panel_g_conf and panel_g_conf.hidden then
-		return
-	end
-
-	local mod_constants = module.get_constants()
-	local mod_state = module.get_state()
-	local mod_win = mod_state.get_window()
-
-	if not utils.win_valid(mod_win) then
-		open_panel(position)
-		return
-	end
-
-	local win_conf = get_module_win_config(mod_constants, position, panel)
-
-	vim.api.nvim_win_set_config(mod_win, win_conf)
-	utils.check_or_make_main_win()
-	vim.api.nvim_set_current_win(state.wins.main)
-end
-
-function M.reset()
-	if not state.active then return end
-	M.show()
-
-	panel_size_reset(config.options.split_order.first)
-	panel_size_reset(config.options.split_order.second)
-	panel_size_reset(config.options.split_order.third)
-	panel_size_reset(config.options.split_order.fourth)
 end
 
 return M

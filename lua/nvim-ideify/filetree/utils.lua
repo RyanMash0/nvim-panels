@@ -1,6 +1,7 @@
 local M = {}
 
 local g_utils = require('nvim-ideify.utils')
+local g_constants = require('nvim-ideify.constants')
 
 local config = require('nvim-ideify.filetree.config')
 local state = require('nvim-ideify.filetree.state')
@@ -9,7 +10,7 @@ function M.go_to_dir()
 	local ui = require('nvim-ideify.filetree.ui')
 	vim.ui.input({
 		prompt = "Path: ",
-		completion = 'file',
+		completion = g_constants.fs_type.FILE,
 	}, function(input)
 		if not input then return end
 		local path = vim.fs.normalize(input)
@@ -98,7 +99,7 @@ function M.get_default_header()
 	local win_id = state.get_window()
 	local win_conf = vim.api.nvim_win_get_config(win_id)
 	local size = win_conf.width or win_conf.height
-	local border = g_utils.repeat_str('=', size)
+	local border = string.rep('=', size)
 	local title_line = ' File Tree'
 	local cwd_array = M.get_cwd_array()
 	local target_array = M.get_target_array()
@@ -142,8 +143,9 @@ end
 
 function M.mark_target()
 	local ui = require('nvim-ideify.filetree.ui')
+	local fs_type = g_constants.fs_type
 	local path, type = M.get_current_entry()
-	if type ~= 'directory' then return end
+	if type ~= fs_type.DIRECTORY then return end
 
 	state.mark_target(path)
 	vim.schedule(ui.render)
@@ -159,12 +161,13 @@ end
 
 function M.open_subdirectories()
 	local ui = require('nvim-ideify.filetree.ui')
+	local fs_type = g_constants.fs_type
 	local target = state.get_target()
 	local path
 
 	state.register_expanded(target)
 	for name, type in vim.fs.dir(target) do
-		if type == 'directory' then
+		if type == fs_type.DIRECTORY then
 			path = vim.fs.joinpath(target, name)
 			state.register_expanded(path)
 		end
@@ -176,11 +179,12 @@ end
 
 function M.close_subdirectories()
 	local ui = require('nvim-ideify.filetree.ui')
+	local fs_type = g_constants.fs_type
 	local target = state.get_target()
 	local path
 
 	for name, type in vim.fs.dir(target) do
-		if type == 'directory' then
+		if type == fs_type.DIRECTORY then
 			path = vim.fs.joinpath(target, name)
 			state.remove_expanded(path)
 		end

@@ -34,15 +34,9 @@ vim.api.nvim_create_user_command(
 )
 
 vim.api.nvim_create_user_command(
-	'IDEifyResetSize',
-	require('nvim-ideify').reset,
-	{ nargs = 0 }
-)
-
-vim.api.nvim_create_user_command(
 	'IDEifyHardReset',
 	require('nvim-ideify').hard_reset,
-	{ nargs = 1 }
+	{ nargs = 0 }
 )
 
 vim.api.nvim_create_user_command(
@@ -79,18 +73,6 @@ vim.api.nvim_create_user_command(
 		require('nvim-ideify').panel_resize(direction, size)
 	end,
 	{ nargs = '+' }
-)
-
-vim.api.nvim_create_user_command(
-	'IDEifyFileTreeRefresh',
-	require('nvim-ideify').tree_refresh,
-	{ nargs = 0 }
-)
-
-vim.api.nvim_create_user_command(
-	'IDEifyBufferBarRefresh',
-	require('nvim-ideify').bufferbar_refresh,
-	{ nargs = 0 }
 )
 
 vim.api.nvim_create_user_command(

@@ -10,5 +10,9 @@ M.wins = {
 	main = constants.NOID,
 	last = constants.NOID,
 }
+M.editor_wins = {}
+M.height_ratio = 1
+M.width_ratio = 1
+
 
 return M

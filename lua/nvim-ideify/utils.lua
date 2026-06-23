@@ -1,8 +1,12 @@
 local M = {}
 
+local config = require('nvim-ideify.config')
 local constants = require('nvim-ideify.constants')
 local state = require('nvim-ideify.state')
 
+---
+---@param pos nvim-ideify.position
+---@return nvim-ideify.split | nil
 function M.position_to_split(pos)
 	local position = constants.position
 	local split = constants.split
@@ -17,6 +21,9 @@ function M.position_to_split(pos)
 	end
 end
 
+---
+---@param sp nvim-ideify.split
+---@return nvim-ideify.position | nil
 function M.split_to_position(sp)
 	local position = constants.position
 	local split = constants.split
@@ -31,6 +38,9 @@ function M.split_to_position(sp)
 	end
 end
 
+---
+---@param err uv.error_name
+---@return nvim-ideify.fs_err
 function M.check_err(err)
 	if not err then
 		return constants.fs_err.NONE
@@ -45,6 +55,9 @@ function M.check_err(err)
 	return constants.fs_err.OTHER
 end
 
+---
+---@param path string
+---@return ...
 local function await_stat(path)
 	local co = coroutine.running()
 	vim.uv.fs_stat(path, function(err, stat)
@@ -55,6 +68,10 @@ local function await_stat(path)
 	return coroutine.yield()
 end
 
+---
+---@param path string
+---@param mode integer
+---@return ...
 local function await_mkdir(path, mode)
 	local co = coroutine.running()
 	vim.uv.fs_mkdir(path, mode, function(err, success)
@@ -65,10 +82,18 @@ local function await_mkdir(path, mode)
 	return coroutine.yield()
 end
 
+---
+---@param check nvim-ideify.fs_err
+---@param type nvim-ideify.fs_type
+---@return boolean
 local function get_dir_exists(check, type)
-	return check == constants.fs_err.NONE and type == 'directory'
+	return check == constants.fs_err.NONE and type == constants.fs_type.DIRECTORY
 end
 
+---
+---@param path string
+---@param mode integer
+---@return string | nil, boolean
 local function do_mkdir_p(path, mode)
 	local dirs = {}
 	local parent = path
@@ -108,6 +133,10 @@ local function do_mkdir_p(path, mode)
 	return nil, true
 end
 
+---
+---@param path string
+---@param mode integer
+---@param callback fun(err: string | nil, success: boolean)
 function M.mkdir_p_async(path, mode, callback)
 	coroutine.wrap(function()
 		local err, success = do_mkdir_p(path, mode)
@@ -118,102 +147,35 @@ function M.mkdir_p_async(path, mode, callback)
 	end)()
 end
 
-function M.repeat_str(str, num)
-	local str_array = {}
-	for _ = 1, num do
-		table.insert(str_array, str)
-	end
-	return table.concat(str_array)
-end
-
-function M.create_win_with_opts(buf, enter, config, opts)
-	local win = vim.api.nvim_open_win(buf, enter, config)
-
-	M.set_opts(constants.type.WIN, win, opts)
-
-	return win
-end
-
-function M.create_buf_with_opts(config, opts)
-	local buf = vim.api.nvim_create_buf(config.listed, config.scratch)
-
-	M.set_opts(constants.type.BUF, buf, opts)
-
-	return buf
-end
-
+---
+---@param type nvim-ideify.type
+---@param id nvim-ideify.buf_id | nvim-ideify.win_id
+---@param opts nvim-ideify.buf_opts | nvim-ideify.win_opts
 function M.set_opts(type, id, opts)
 	for key, val in pairs(opts) do
 		vim.api.nvim_set_option_value(key, val, { scope = 'local', [type] = id })
 	end
 end
 
-local function get_split_opts(pos_to_win_valid)
-	local position = constants.position
-
-	if pos_to_win_valid[position.LEFT] then
-		return { split = M.position_to_split(position.LEFT) }
-	elseif pos_to_win_valid[position.RIGHT] then
-		return { split = M.position_to_split(position.RIGHT) }
-	elseif pos_to_win_valid[position.TOP] then
-		return { split = M.position_to_split(position.TOP) }
-	elseif pos_to_win_valid[position.BOTTOM] then
-		return { split = M.position_to_split(position.BOTTOM) }
-	end
-end
-
-local function check_or_make_main_buf()
-	local bufs = vim.api.nvim_list_bufs()
-	local check_bufs = {}
-	for i, buf in ipairs(bufs) do
-		check_bufs[buf] = i
-	end
-
-	local mods = M.get_modules()
-	local mod_buf
-	local mod_buf_valid
-	for _, module in pairs(mods) do
-		mod_buf = module and module.get_state().get_buffer() or constants.NOID
-		mod_buf_valid = M.buf_valid(mod_buf)
-		if mod_buf_valid then
-			check_bufs[mod_buf] = nil
-		end
-	end
-
-	for id, _ in pairs(constants.ui2_buffers) do
-		check_bufs[id] = nil
-	end
-
-	if next(check_bufs) == nil then
-		return vim.api.nvim_create_buf(true, false)
-	end
-
-	return next(check_bufs)
-end
-
-function M.win_valid(id)
-	if type(id) ~= 'number' then return false end
-	if not vim.api.nvim_win_is_valid(id) then
-		return false
-	end
-	return true
-end
-
+---
+---@return nvim-ideify.buf_id
 function M.get_last_win_buf()
 	local last_win = M.win_valid(state.wins.last) and state.wins.last
 	return vim.api.nvim_win_get_buf(last_win or state.wins.main)
 end
 
+---
+---@param buf nvim-ideify.buf_id
 function M.set_last_win_buf(buf)
-	local g_utils = require('nvim-ideify.utils')
-	local g_state = require('nvim-ideify.state')
+	M.check_or_make_main_win()
+	local last_win = M.win_valid(state.wins.last) and state.wins.last
 
-	g_utils.check_or_make_main_win()
-	local last_win = g_utils.win_valid(g_state.wins.last) and g_state.wins.last
-
-	vim.api.nvim_win_set_buf(last_win or g_state.wins.main, buf)
+	vim.api.nvim_win_set_buf(last_win or state.wins.main, buf)
 end
 
+---
+---@param id any
+---@return boolean
 function M.buf_valid(id)
 	if type(id) ~= 'number' then return false end
 	if not vim.api.nvim_buf_is_valid(id) then
@@ -222,43 +184,167 @@ function M.buf_valid(id)
 	return true
 end
 
-function M.get_modules()
-	local config = require('nvim-ideify.config')
-	return {
-		left = config.options.layout.left.module(),
-		right = config.options.layout.right.module(),
-		top = config.options.layout.top.module(),
-		bottom = config.options.layout.bottom.module(),
-	}
+---
+---@param id any
+---@return boolean
+function M.win_valid(id)
+	if type(id) ~= 'number' then return false end
+	if not vim.api.nvim_win_is_valid(id) then
+		return false
+	end
+	return true
 end
 
-function M.get_plugin_wins()
-	local modules = M.get_modules()
-	local left = modules.left
-	local right = modules.right
-	local top = modules.top
-	local bottom = modules.bottom
-	return {
-		left = left and left.get_state().get_window() or constants.NOID,
-		right = right and right.get_state().get_window() or constants.NOID,
-		top = top and top.get_state().get_window() or constants.NOID,
-		bottom = bottom and bottom.get_state().get_window() or constants.NOID,
-	}
+---
+---@param id nvim-ideify.buf_id
+function M.delete_buf(id)
+	if M.buf_valid(id) then
+		vim.api.nvim_buf_delete(id, { force = true, })
+	end
 end
 
-function M.is_plugin_win(win)
-	if not M.win_valid(win) then return false end
-	local wins = M.get_plugin_wins()
-	local l_win = wins.left
-	local r_win = wins.right
-	local t_win = wins.top
-	local b_win = wins.bottom
-	if win == l_win or win == r_win or win == t_win or win == b_win then
-		return true
+---
+---@param id nvim-ideify.win_id
+function M.close_win(id)
+	if M.win_valid(id) then
+		vim.api.nvim_win_close(id, true)
+	end
+end
+
+---
+---@param position nvim-ideify.position
+---@return nvim-ideify.buf_id
+local function get_buf_by_position(position)
+	local module = config.options.layout[position].module()
+	return module and module.get_state().get_buffer() or constants.NOID
+end
+
+---
+---@return table<nvim-ideify.position, nvim-ideify.buf_id>
+function M.get_position_to_buf()
+	local position_to_buf = {}
+	local buf
+	for _, pos in pairs(constants.position) do
+		buf = get_buf_by_position(pos)
+		position_to_buf[pos] = M.buf_valid(buf) or nil
+	end
+	return position_to_buf
+end
+
+---
+---@return table<nvim-ideify.buf_id, nvim-ideify.position>
+function M.get_buf_to_position()
+	local buf_to_position = {}
+	for position, buf in pairs(M.get_position_to_buf()) do
+		buf_to_position[buf] = position
+	end
+	return buf_to_position
+end
+
+---
+---@param buf nvim-ideify.buf_id
+---@return boolean
+function M.is_plugin_buf(buf)
+	for _, id in pairs(M.get_position_to_buf()) do
+		if buf == id then return true end
 	end
 	return false
 end
 
+---
+---@param position nvim-ideify.position
+---@return nvim-ideify.win_id
+local function get_win_by_position(position)
+	local module = config.options.layout[position].module()
+	return module and module.get_state().get_window() or constants.NOID
+end
+
+---
+---@return table<nvim-ideify.position, nvim-ideify.win_id>
+function M.get_position_to_win()
+	local position_to_win = {}
+	local win
+	for _, pos in pairs(constants.position) do
+		win = get_win_by_position(pos)
+		position_to_win[pos] = M.win_valid(win) or nil
+	end
+	return position_to_win
+end
+
+---
+---@return table<nvim-ideify.buf_id, nvim-ideify.position>
+function M.get_win_to_position()
+	local win_to_position = {}
+	for position, win in pairs(M.get_position_to_win()) do
+		win_to_position[win] = position
+	end
+	return win_to_position
+end
+
+---
+---@param win nvim-ideify.win_id
+---@return boolean
+function M.is_plugin_win(win)
+	for _, id in pairs(M.get_position_to_win()) do
+		if win == id then return true end
+	end
+	return false
+end
+
+---
+---@return nvim-ideify.buf_id
+local function check_or_make_main_buf()
+	local bufs = vim.api.nvim_list_bufs()
+	---@type table<nvim-ideify.buf_id, integer>
+	local check_bufs = {}
+	for i, buf in ipairs(bufs) do
+		check_bufs[buf] = i
+	end
+
+	local mod_bufs = M.get_position_to_buf()
+	for _, id in pairs(mod_bufs) do
+			check_bufs[id] = nil
+	end
+
+	for id, _ in pairs(constants.ui2_buffers) do
+		check_bufs[id] = nil
+	end
+
+	local next_buf = next(check_bufs)
+
+	if next_buf == nil then
+		return vim.api.nvim_create_buf(true, false)
+	end
+
+	return next_buf
+end
+
+---
+---@return table<nvim-ideify.position, nvim-ideify.win_id>
+local function get_split_order_to_win()
+	local pos_to_win = M.get_position_to_win()
+	local split_order_to_win = {}
+	for i, position in ipairs(config.options.split_order) do
+		split_order_to_win[i] = pos_to_win[position]
+	end
+
+	return split_order_to_win
+end
+
+---
+---@return nvim-ideify.win_config
+local function get_split_conf()
+	local splits = get_split_order_to_win()
+	local conf = {}
+	for i, position in ipairs(config.options.split_order) do
+		conf.type = splits[i] and M.position_to_split(position)
+		if conf.type then return conf end
+	end
+
+	return {}
+end
+
+---
 function M.check_or_make_main_win()
 	if vim.api.nvim_win_is_valid(state.wins.main) then return end
 
@@ -268,17 +354,9 @@ function M.check_or_make_main_win()
 		check_wins[win] = i
 	end
 
-	local mods = M.get_modules()
-	local mod_win
-	local mod_win_valid
-	local pos_to_win_valid = {}
-	for position, module in pairs(mods) do
-		mod_win = module and module.get_state().get_window() or constants.NOID
-		mod_win_valid = M.win_valid(mod_win)
-		if mod_win_valid then
-			check_wins[mod_win] = nil
-			pos_to_win_valid[position] = true
-		end
+	local mod_wins = M.get_position_to_win()
+	for _, id in pairs(mod_wins) do
+			check_wins[id] = nil
 	end
 
 	local win_config
@@ -298,9 +376,10 @@ function M.check_or_make_main_win()
 
 	if min == nil then
 		local buf_id = check_or_make_main_buf()
-		local win_opts = get_split_opts(pos_to_win_valid)
-		state.wins.main = vim.api.nvim_open_win(buf_id, true, win_opts)
-		require('nvim-ideify.ui').reset()
+		local win_conf = get_split_conf()
+		state.wins.main = vim.api.nvim_open_win(buf_id, true, win_conf)
+		local active = state.active
+		if active then require('nvim-ideify.ui').show() end
 		return
 	end
 
@@ -310,18 +389,6 @@ function M.check_or_make_main_win()
 		end
 	end
 	state.wins.main = min
-end
-
-function M.delete_buf(id)
-	if M.buf_valid(id) then
-		vim.api.nvim_buf_delete(id, { force = true, })
-	end
-end
-
-function M.close_win(id)
-	if M.win_valid(id) then
-		vim.api.nvim_win_close(id, true)
-	end
 end
 
 return M

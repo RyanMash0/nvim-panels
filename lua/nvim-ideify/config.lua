@@ -1,13 +1,14 @@
+---@class nvim-ideify.config
 local M = {}
 
 local constants = require('nvim-ideify.constants')
 
----@type nvim-ideify.config
+---@type nvim-ideify.options
 M.defaults = {
 	layout = {
 		left = {
 			module = function()
-				return require('nvim-ideify.filetree')
+				return (require('nvim-ideify.filetree'))
 			end,
 			width = 30,
 			hidden = false,
@@ -21,24 +22,24 @@ M.defaults = {
 		},
 		top = {
 			module = function()
-				return require('nvim-ideify.bufferbar')
+				return (require('nvim-ideify.bufferbar'))
 			end,
 			height = 2,
 			hidden = false,
 		},
 		bottom = {
 			module = function()
-				return require('nvim-ideify.terminal')
+				return (require('nvim-ideify.terminal'))
 			end,
 			height = 10,
 			hidden = false,
 		},
 	},
 	split_order = {
-		first = constants.position.LEFT,
-		second = constants.position.RIGHT,
-		third = constants.position.TOP,
-		fourth = constants.position.BOTTOM,
+		[1] = constants.position.LEFT,
+		[2] = constants.position.RIGHT,
+		[3] = constants.position.TOP,
+		[4] = constants.position.BOTTOM,
 	},
 	permissions = {
 		directory = tonumber('755', 8),
@@ -49,7 +50,7 @@ M.defaults = {
 	),
 }
 
----@type nvim-ideify.config
+---@type nvim-ideify.options
 M.options = vim.deepcopy(M.defaults)
 
 function M.setup(opts)

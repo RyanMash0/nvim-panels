@@ -5,7 +5,6 @@ local constants = require('nvim-ideify.constants')
 local state = require('nvim-ideify.state')
 local ui = require('nvim-ideify.ui')
 
-local filetree = require('nvim-ideify.filetree')
 local bufferbar = require('nvim-ideify.bufferbar')
 
 M.open = ui.open
@@ -21,14 +20,11 @@ M.toggle = function()
 		ui.open()
 	end
 end
-M.reset = ui.reset
 M.hard_reset = function()
 	ui.close()
 	ui.open()
 end
 
-M.tree_refresh = filetree.get_ui().render
-M.bufferbar_refresh = bufferbar.get_ui().render
 M.bufferbar_next = bufferbar.buffer_next
 M.bufferbar_previous = bufferbar.buffer_previous
 
@@ -59,10 +55,15 @@ function M.panel_resize(position, size)
 	local panel_confs = config.options.layout
 	if not panel_confs[position] then return end
 
-	if panel_confs[position].width then panel_confs[position].width = size
-	elseif panel_confs[position].height then panel_confs[position].height = size end
+	if panel_confs[position].width then
+		panel_confs[position].width = size
+	elseif panel_confs[position].height then
+		panel_confs[position].height = size
+	end
 
-	ui.reset()
+	local active = state.active
+
+	if active then ui.show() end
 end
 
 function M.setup(opts)
@@ -101,19 +102,12 @@ vim.api.nvim_create_autocmd('WinEnter', {
 
 vim.api.nvim_create_autocmd('TextChanged', {
 	group = 'IDEify',
-	callback = function()
+	callback = function(args)
 		local utils = require('nvim-ideify.utils')
-		local win = vim.api.nvim_get_current_win()
-		local modules = utils.get_modules()
-		local mod_win
-		local buf
-		for _, module in pairs(modules) do
-			mod_win = module.get_state().get_window()
-			mod_win = utils.win_valid(mod_win) and mod_win or 0
-			buf = vim.api.nvim_win_get_buf(mod_win)
-			if win == mod_win and vim.bo[buf].filetype == 'netrw' then
-				ui.module_buf_reload(module)
-			end
+		local buf = args.buf
+		if utils.is_plugin_buf(buf) and vim.bo[buf].filetype == 'netrw' then
+			local buf_to_pos = utils.get_buf_to_position()
+			ui.module_buf_reload(buf_to_pos[args.buf])
 		end
 	end
 })
@@ -123,13 +117,11 @@ vim.api.nvim_create_autocmd('WinResized', {
 	callback = function(args)
 		local utils = require('nvim-ideify.utils')
 		local win = tonumber(args.match) or constants.NOID
-		local modules = utils.get_modules()
-		local mod_win
-		for _, module in pairs(modules) do
-			mod_win = module.get_state().get_window()
-			if win == mod_win then
-				module.get_ui().render()
-			end
+		if utils.is_plugin_win(win) then
+			local win_to_pos = utils.get_win_to_position()
+			local pos = win_to_pos[win]
+			local module = config.options.layout[pos].module()
+			module.get_ui().render()
 		end
 	end
 })

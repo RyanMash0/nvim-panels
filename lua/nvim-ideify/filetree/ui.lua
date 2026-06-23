@@ -30,11 +30,12 @@ local function set_cur_line(line)
 end
 
 local function get_entries(start_line)
+	local fs_type = g_constants.fs_type
 	local parent = state.get_entry_by_line(start_line)
 	local depth = parent.depth + 1
 	local path = parent.path
 	local prefix = ''
-	prefix = g_utils.repeat_str('| ', depth)
+	prefix = string.rep('| ', depth)
 
 	local indicator
 	if depth < 0 then
@@ -63,7 +64,7 @@ local function get_entries(start_line)
 
 		expanded = state.is_expanded(entry_path)
 
-		if type == 'directory' then
+		if type == fs_type.DIRECTORY then
 			line = start_line + dirs + extra
 			dirs = dirs + 1
 			if expanded then dir_type = indicator.dir_open
@@ -152,13 +153,15 @@ function M.ascend()
 end
 
 function M.descend()
+	local fs_type = g_constants.fs_type
 	local path, type = utils.get_current_entry()
-	if type ~= 'directory' then return end
+	if type ~= fs_type.DIRECTORY then return end
 	state.clear_marked()
 	M.change_dir(path)
 end
 
 function M.action()
+	local fs_type = g_constants.fs_type
 	local win = state.get_window()
 	local line = vim.api.nvim_win_get_cursor(win)[1]
 	local header_height = state.get_header_height()
@@ -171,7 +174,7 @@ function M.action()
 	end
 
 	local parent = state.get_entry_by_line(line)
-	if parent.type == 'file' then
+	if parent.type == fs_type.FILE then
 		g_utils.check_or_make_main_win()
 		local last_win =
 			g_utils.win_valid(g_state.wins.last) and g_state.wins.last
@@ -190,9 +193,9 @@ function M.action()
 	end
 
 	local expanded = state.is_expanded(parent.path)
-	if parent.type == 'directory' and expanded then
+	if parent.type == fs_type.DIRECTORY and expanded then
 		close(line)
-	elseif parent.type == 'directory' and not expanded then
+	elseif parent.type == fs_type.DIRECTORY and not expanded then
 		expand(line)
 	end
 
@@ -201,6 +204,7 @@ function M.action()
 end
 
 function M.highlight()
+	local fs_type = g_constants.fs_type
 	local buf_id = state.get_buffer()
 	local ns_id = constants.namespace
 	vim.api.nvim_buf_clear_namespace(buf_id, ns_id, 0, -1)
@@ -222,9 +226,9 @@ function M.highlight()
 			{end_col = name_start, hl_group = bar_hl}
 		)
 
-		if entry.type == 'Header' then
+		if entry.type == fs_type.HEADER then
 			hl_group = header_hl
-		elseif entry.type == 'directory' then
+		elseif entry.type == fs_type.DIRECTORY then
 			hl_group = dir_hl
 		else
 			hl_group = plain_hl
@@ -246,16 +250,17 @@ function M.highlight()
 end
 
 function M.render()
+	local fs_type = g_constants.fs_type
 	local path = vim.uv.cwd() or vim.fn.getcwd()
 	local header_entry = {
 		depth = constants.BASE_DEPTH,
 		path = path,
-		type = 'Header',
+		type = fs_type.HEADER,
 	}
 	local parent_dir_entry = {
 		depth = constants.BASE_DEPTH,
 		path = path,
-		type = 'directory',
+		type = fs_type.DIRECTORY,
 	}
 	local header = utils.get_full_header()
 
