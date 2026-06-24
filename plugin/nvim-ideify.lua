@@ -34,6 +34,12 @@ vim.api.nvim_create_user_command(
 )
 
 vim.api.nvim_create_user_command(
+	'IDEifyReset',
+	require('nvim-ideify').reset,
+	{ nargs = 0 }
+)
+
+vim.api.nvim_create_user_command(
 	'IDEifyHardReset',
 	require('nvim-ideify').hard_reset,
 	{ nargs = 0 }

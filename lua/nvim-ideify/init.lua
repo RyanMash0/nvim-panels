@@ -14,15 +14,21 @@ M.show = ui.show
 M.toggle = function()
 	if state.active then
 		ui.hide()
-	elseif not state.active and state.opened then
+	else
 		ui.show()
-	elseif not state.active and not state.opened then
-		ui.open()
 	end
 end
+M.reset = function()
+	if not state.active then return end
+	ui.show()
+end
 M.hard_reset = function()
-	ui.close()
-	ui.open()
+	if not state.opened then return end
+	if state.active then
+		ui.open()
+	else
+		ui.close()
+	end
 end
 
 M.bufferbar_next = bufferbar.buffer_next
