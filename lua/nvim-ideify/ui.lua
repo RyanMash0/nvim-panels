@@ -5,48 +5,46 @@ local constants = require('nvim-ideify.constants')
 local state = require('nvim-ideify.state')
 local utils = require('nvim-ideify.utils')
 
+---
+---@return fun(): string
 local function get_on_click()
 	return function()
 		local win = vim.fn.getmousepos().winid
-
-		local left = config.options.layout.left.module()
-		local right = config.options.layout.right.module()
-		local top = config.options.layout.top.module()
-		local bottom = config.options.layout.bottom.module()
-		local l_state = left and left.get_state()
-		local r_state = right and right.get_state()
-		local t_state = top and top.get_state()
-		local b_state = bottom and bottom.get_state()
-		local win_left = l_state and win == l_state.get_window()
-		local win_right = r_state and win == r_state.get_window()
-		local win_top = t_state and win == t_state.get_window()
-		local win_bottom = b_state and win == b_state.get_window()
-		local click_left = l_state and l_state.get_on_click()
-		local click_right = r_state and r_state.get_on_click()
-		local click_top = t_state and t_state.get_on_click()
-		local click_bottom = b_state and b_state.get_on_click()
-
-		if win_left and click_left then
-			click_left()
-		elseif win_right and click_right then
-			click_right()
-		elseif win_top and click_top then
-			click_top()
-		elseif win_bottom and click_bottom then
-			click_bottom()
+		local mod_state
+		local on_click
+		local check_win
+		for _, position in ipairs(config.options.split_order) do
+			mod_state = utils.get_state_by_position(position)
+			on_click = mod_state and mod_state.get_on_click()
+			check_win = mod_state and mod_state.get_window() == win
+			if check_win and on_click then
+				on_click()
+				break
+			elseif check_win and not on_click then
+				break
+			end
 		end
+
 		return '<LeftMouse>'
 	end
 end
 
+---
+---@param tree nvim-ideify.winlayout.branch | nvim-ideify.winlayout.leaf
+---@return nvim-ideify.winlayout.leaf
 local function leftmost_leaf(tree)
 	local leaf = tree
-	while leaf[1] ~= 'leaf' do
+	while leaf[1] ~= constants.winlayout_type.LEAF do
 		leaf = leaf[2][1]
 	end
+	---@cast leaf nvim-ideify.winlayout.leaf
 	return leaf
 end
 
+---
+---@param forest (nvim-ideify.winlayout.branch | nvim-ideify.winlayout.leaf)[]
+---@param parents nvim-ideify.winlayout.parent[]
+---@param depth integer
 local function add_windows(forest, parents, depth)
 	local new_forest = {}
 	local new_parents = {}
@@ -70,10 +68,10 @@ local function add_windows(forest, parents, depth)
 			leaf = leftmost_leaf(subtree)
 			win_config = vim.api.nvim_win_get_config(leaf[2])
 
-			if tree[1] == 'row' then
-				win_config.split = 'right'
+			if tree[1] == constants.winlayout_type.ROW then
+				win_config.split = constants.split.RIGHT
 			else
-				win_config.split = 'below'
+				win_config.split = constants.split.BELOW
 			end
 
 			if win_config.height then
@@ -107,31 +105,33 @@ local function add_windows(forest, parents, depth)
 	end
 end
 
+---
 local function parse_layout()
 	local win_tree = vim.fn.winlayout()
+	if not win_tree[1] then
+		vim.notify('No windows', vim.log.levels.ERROR)
+		return
+	end
+	---@cast win_tree nvim-ideify.winlayout.branch | nvim-ideify.winlayout.leaf
 	local root_leaf = leftmost_leaf(win_tree)
 	state.wins.main = root_leaf[2]
 	state.editor_wins = {}
 
 	if win_tree == root_leaf then return end
-	local left = config.options.layout.left
-	local right = config.options.layout.right
-	local top = config.options.layout.top
-	local bottom = config.options.layout.bottom
-	local l_vis = left.module() and not left.hidden
-	local r_vis = right.module() and not right.hidden
-	local t_vis = top.module() and not top.hidden
-	local b_vis = bottom.module() and not bottom.hidden
+	local pos = constants.position
+	local sizes = {}
+	local panel
+	local module
+	for _, position in ipairs(config.options.split_order) do
+		panel = utils.get_panel_by_position(position)
+		module = panel.module()
+		sizes[position] = module and not panel.hidden and panel.width or 0
+	end
 
-	local l_width = l_vis and left.width or 0
-	local r_width = r_vis and right.width or 0
-	local t_height = t_vis and top.height or 0
-	local b_height = b_vis and bottom.height or 0
-
-	local width_reduction = l_width + r_width
-	local height_reduction = t_height + b_height
-	state.width_ratio = (vim.o.columns - width_reduction) / vim.o.columns
-	state.height_ratio = (vim.o.lines - height_reduction) / vim.o.lines
+	local layout_width = sizes[pos.LEFT] + sizes[pos.RIGHT]
+	local layout_height = sizes[pos.TOP] + sizes[pos.BOTTOM]
+	state.width_ratio = (vim.o.columns - layout_width) / vim.o.columns
+	state.height_ratio = (vim.o.lines - layout_height) / vim.o.lines
 
 	local initial_entry = {
 		parent = nil,
@@ -143,6 +143,7 @@ local function parse_layout()
 	add_windows({ win_tree }, { { 1, 1, root_leaf } }, 1)
 end
 
+---
 local function close_wins()
 	local wins = vim.api.nvim_tabpage_list_wins(0)
 	local win_config
@@ -158,10 +159,14 @@ local function close_wins()
 	end
 end
 
+---
+---@param win nvim-ideify.editor_win
+---@return nvim-ideify.editor_win
 local function get_parent(win)
 	return state.editor_wins[win.parent[1]][win.parent[2]]
 end
 
+---
 local function open_wins()
 	local win
 	local win_id
@@ -201,47 +206,18 @@ local function open_wins()
 	end
 end
 
-local function get_panel_from_position(position)
-	local split = constants.position
-
-	if position == split.LEFT then
-		return config.options.layout.left
-	elseif position == split.RIGHT then
-		return config.options.layout.right
-	elseif position == split.TOP then
-		return config.options.layout.top
-	elseif position == split.BOTTOM then
-		return config.options.layout.bottom end
-end
-
-local function close_panel(position)
-	local panel = get_panel_from_position(position)
-	if not panel.module() then
-		return
-	end
-
-	local panel_state = panel.module().get_state()
-	utils.close_win(panel_state.get_window())
-	utils.delete_buf(panel_state.get_buffer())
-	panel_state.set_window(constants.NOID)
-	panel_state.set_buffer(constants.NOID)
-end
-
-local function hide_panel(position)
-	local panel = get_panel_from_position(position)
-	if not panel.module() then
-		return
-	end
-
-	local panel_state = panel.module().get_state()
-	utils.close_win(panel_state.get_window())
-	panel_state.set_window(constants.NOID)
-end
-
+---
+---@param mod_constants nvim-ideify.module.constants
+---@return nvim-ideify.buf_config
 local function get_module_buf_config(mod_constants)
 	return vim.deepcopy(mod_constants.config.buffer)
 end
 
+---
+---@param mod_constants nvim-ideify.module.constants
+---@param position nvim-ideify.position
+---@param panel nvim-ideify.panel
+---@return nvim-ideify.win_config
 local function get_module_win_config(mod_constants, position, panel)
 	local pos = constants.position
 	local win_conf = vim.deepcopy(mod_constants.config.window)
@@ -255,11 +231,12 @@ local function get_module_win_config(mod_constants, position, panel)
 	return win_conf
 end
 
+---
+---@param position nvim-ideify.position
 local function open_panel(position)
-	local panel = get_panel_from_position(position)
-	local panel_g_conf = config.options.layout[position]
+	local panel = utils.get_panel_by_position(position)
 	local module = panel.module()
-	if not module or panel_g_conf and panel_g_conf.hidden then
+	if panel.hidden or not module then
 		return
 	end
 
@@ -288,11 +265,27 @@ local function open_panel(position)
 	mod_keys.setup()
 end
 
+---
+---@param position nvim-ideify.position
+local function close_panel(position)
+	local panel = utils.get_panel_by_position(position)
+	if not panel.module() then
+		return
+	end
+
+	local panel_state = panel.module().get_state()
+	utils.close_win(panel_state.get_window())
+	utils.delete_buf(panel_state.get_buffer())
+	panel_state.set_window(constants.NOID)
+	panel_state.set_buffer(constants.NOID)
+end
+
+---
+---@param position nvim-ideify.position
 local function unhide_panel(position)
-	local panel = get_panel_from_position(position)
-	local panel_g_conf = config.options.layout[position]
+	local panel = utils.get_panel_by_position(position)
 	local module = panel.module()
-	if not module or (panel_g_conf and panel_g_conf.hidden) then
+	if panel.hidden or not module then
 		return
 	end
 
@@ -312,21 +305,20 @@ local function unhide_panel(position)
 	utils.set_opts(constants.type.WIN, win, win_opts)
 end
 
-function M.close()
-	utils.check_or_make_main_win()
-
-	state.active = false
-	state.opened = false
-
-	for _, panel in ipairs(config.options.split_order) do
-		close_panel(panel)
+---
+---@param position nvim-ideify.position
+local function hide_panel(position)
+	local panel = utils.get_panel_by_position(position)
+	if not panel.module() then
+		return
 	end
 
-	if state.equalalways then
-		vim.opt.equalalways = true
-	end
+	local panel_state = panel.module().get_state()
+	utils.close_win(panel_state.get_window())
+	panel_state.set_window(constants.NOID)
 end
 
+---
 function M.open()
 	M.close()
 	if state.equalalways then
@@ -335,8 +327,8 @@ function M.open()
 	parse_layout()
 	close_wins()
 
-	for _, panel in ipairs(config.options.split_order) do
-		open_panel(panel)
+	for _, position in ipairs(config.options.split_order) do
+		open_panel(position)
 	end
 
 	local key_opts = { expr = true, remap = false }
@@ -347,13 +339,15 @@ function M.open()
 	state.opened = true
 end
 
-function M.hide()
+---
+function M.close()
 	utils.check_or_make_main_win()
 
 	state.active = false
+	state.opened = false
 
-	for _, panel in ipairs(config.options.split_order) do
-		hide_panel(panel)
+	for _, position in ipairs(config.options.split_order) do
+		close_panel(position)
 	end
 
 	if state.equalalways then
@@ -361,9 +355,10 @@ function M.hide()
 	end
 end
 
+---
 function M.show()
 	if not state.opened then
-		M.open()
+		return M.open()
 	end
 
 	M.hide()
@@ -373,8 +368,8 @@ function M.show()
 	parse_layout()
 	close_wins()
 
-	for _, panel in ipairs(config.options.split_order) do
-		unhide_panel(panel)
+	for _, position in ipairs(config.options.split_order) do
+		unhide_panel(position)
 	end
 
 	local key_opts = { expr = true, remap = false }
@@ -384,7 +379,45 @@ function M.show()
 	state.active = true
 end
 
-function M.module_buf_reload(module)
+---
+function M.hide()
+	utils.check_or_make_main_win()
+
+	state.active = false
+
+	for _, position in ipairs(config.options.split_order) do
+		hide_panel(position)
+	end
+
+	if state.equalalways then
+		vim.opt.equalalways = true
+	end
+end
+
+---
+function M.toggle()
+	if state.active then M.hide()
+	else M.show() end
+end
+
+---
+function M.reset()
+	if state.active then M.show() end
+end
+
+---
+function M.hard_reset()
+	if not state.opened then return end
+	if state.active then M.open()
+	else M.close() end
+end
+
+---
+---@param position nvim-ideify.position
+function M.module_buf_reload(position)
+	local module = utils.get_module_by_position(position)
+	if not module then return end
+
 	local mod_conf = module.get_config()
 	local mod_constants = module.get_constants()
 	local mod_keys = module.get_keymaps()

@@ -1,7 +1,7 @@
 ---@class nvim-ideify.constants
 local M = {}
 
----@enum nvim-ideify.position
+---@enum nvim-ideify.enum.position
 M.position = {
 	LEFT = 'left',
 	RIGHT = 'right',
@@ -9,7 +9,7 @@ M.position = {
 	BOTTOM = 'bottom',
 }
 
----@enum nvim-ideify.split
+---@enum nvim-ideify.enum.split
 M.split = {
 	LEFT = 'left',
 	RIGHT = 'right',
@@ -17,13 +17,13 @@ M.split = {
 	BELOW = 'below',
 }
 
----@enum nvim-ideify.type
+---@enum nvim-ideify.enum.type
 M.type = {
-	WIN = 'win',
 	BUF = 'buf',
+	WIN = 'win',
 }
 
----@enum nvim-ideify.fs_err
+---@enum nvim-ideify.enum.fs_err
 M.fs_err = {
 	NONE = 0,
 	EXISTS = 1,
@@ -32,7 +32,7 @@ M.fs_err = {
 	OTHER = 4,
 }
 
----@enum nvim-ideify.fs_type
+---@enum nvim-ideify.enum.fs_type
 M.fs_type = {
 	HEADER = 'header',
 	FILE = 'file',
@@ -43,6 +43,13 @@ M.fs_type = {
 	CHAR = 'char',
 	BLOCK = 'block',
 	UNKNOWN = 'unknown',
+}
+
+---@enum nvim-ideify.winlayout.type
+M.winlayout_type = {
+	ROW = 'row',
+	COL = 'col',
+	LEAF = 'leaf',
 }
 
 ---@type table<nvim-ideify.buf_id, boolean>

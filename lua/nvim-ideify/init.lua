@@ -11,37 +11,27 @@ M.open = ui.open
 M.close = ui.close
 M.hide = ui.hide
 M.show = ui.show
-M.toggle = function()
-	if state.active then
-		ui.hide()
-	else
-		ui.show()
-	end
-end
-M.reset = function()
-	if not state.active then return end
-	ui.show()
-end
-M.hard_reset = function()
-	if not state.opened then return end
-	if state.active then
-		ui.open()
-	else
-		ui.close()
-	end
-end
+M.toggle = ui.toggle
+M.reset = ui.reset
+M.hard_reset = ui.hard_reset
 
 M.bufferbar_next = bufferbar.buffer_next
 M.bufferbar_previous = bufferbar.buffer_previous
 
-function M.panel_toggle(direction)
+---
+---@param position nvim-ideify.position
+function M.panel_toggle(position)
 	local panel_confs = config.options.layout
-	if not panel_confs[direction] then return end
+	if not panel_confs[position] then return end
 
-	panel_confs[direction].hidden = not panel_confs[direction].hidden
-	if state.active then ui.show() end
+	panel_confs[position].hidden = not panel_confs[position].hidden
+
+	M.reset()
 end
 
+---
+---@param position1 nvim-ideify.position
+---@param position2 nvim-ideify.position
 function M.panel_swap(position1, position2)
 	local panel_confs = config.options.layout
 	if not panel_confs[position1] or not panel_confs[position2] then return end
@@ -52,11 +42,12 @@ function M.panel_swap(position1, position2)
 	panel_confs[position1].module = tmp_module2
 	panel_confs[position2].module = tmp_module1
 
-	local active = state.active
-
-	if active then ui.show() end
+	M.reset()
 end
 
+---
+---@param position nvim-ideify.position
+---@param size integer
 function M.panel_resize(position, size)
 	local panel_confs = config.options.layout
 	if not panel_confs[position] then return end
@@ -67,11 +58,11 @@ function M.panel_resize(position, size)
 		panel_confs[position].height = size
 	end
 
-	local active = state.active
-
-	if active then ui.show() end
+	M.reset()
 end
 
+---
+---@param opts nvim-ideify.options
 function M.setup(opts)
 	config.setup(opts)
 	require('nvim-ideify.state').wins.main = vim.api.nvim_get_current_win()
@@ -96,15 +87,6 @@ vim.api.nvim_create_autocmd('WinEnter', {
 		end
 	end,
 })
-
--- vim.api.nvim_create_autocmd('BufWinEnter', {
--- 	group = 'IDEify',
--- 	pattern = 'quickfix',
--- 	callback = function(args)
--- 		vim.print(args)
--- 		-- vim.schedule(ui.reset)
--- 	end,
--- })
 
 vim.api.nvim_create_autocmd('TextChanged', {
 	group = 'IDEify',
@@ -132,61 +114,4 @@ vim.api.nvim_create_autocmd('WinResized', {
 	end
 })
 
--- local events = vim.fn.getcompletion('', 'event')
--- local forbidden_events = {
--- 	["BufReadCmd"] = true,
--- 	["BufWriteCmd"] = true,
--- 	["CmdlineChanged"] = true,
--- 	["CmdlineEnter"] = true,
--- 	["ColorScheme"] = true,
--- 	["ColorSchemePre"] = true,
--- 	["CursorMoved"] = true,
--- 	["CursorMovedI"] = true,
--- 	["CursorMovedC"] = true,
--- 	["CursorHold"] = true,
--- 	["CursorHoldI"] = true,
--- 	["DiagnosticChanged"] = true,
--- 	["ExitPre"] = true,
--- 	["FileReadCmd"] = true,
--- 	["FileWriteCmd"] = true,
--- 	["FocusGained"] = true,
--- 	["FocusLost"] = true,
--- 	["LspNotify"] = true,
--- 	["LspProgress"] = true,
--- 	["LspRequest"] = true,
--- 	["LspTokenUpdate"] = true,
--- 	["OptionSet"] = true,
--- 	["SafeState"] = true,
--- 	["SourceCmd"] = true,
--- 	["SourcePre"] = true,
--- 	["SourcePost"] = true,
--- 	["UIEnter"] = true,
--- 	["VimEnter"] = true,
--- 	["VimResized"] = true,
--- 	["VimResume"] = true,
--- 	["VimSuspend"] = true,
--- 	["VimLeave"] = true,
--- 	["VimLeavePre"] = true,
--- 	["WinScrolled"] = true,
--- }
---
--- for i, event in ipairs(events) do
--- 	if forbidden_events[event] then
--- 		events[i] = nil
--- 	end
--- end
---
--- local new_events = {}
--- for _, event in pairs(events) do
--- 	table.insert(new_events, event)
--- end
---
--- vim.api.nvim_create_autocmd(new_events, {
--- 	group = 'IDEify',
--- 	callback = function(args)
---     -- Print the exact event and the time it fired
---     local time = os.date("%H:%M:%S")
---     print(string.format("[%s] Event fired: %s (Buf: %d)", time, args.event, args.buf))
---   end,
--- })
 return M

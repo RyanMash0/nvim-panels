@@ -10,6 +10,21 @@
 ---@alias nvim-ideify.win_opts table<string, any>
 ---@alias nvim-ideify.buf_opts table<string, any>
 ---@alias nvim-ideify.invalid_id -1
+---@alias nvim-ideify.position 'left' | 'right' | 'top' | 'bottom'
+---@alias nvim-ideify.split 'left' | 'right' | 'above' | 'below'
+---@alias nvim-ideify.winlayout.depth integer
+---@alias nvim-ideify.winlayout.index integer
+---@alias nvim-ideify.winlayout.branch vim.fn.winlayout.branch
+---@alias nvim-ideify.winlayout.leaf vim.fn.winlayout.leaf
+---@alias nvim-ideify.winlayout.empty vim.fn.winlayout.empty
+
+-------------------------------------------------------------------------------
+-- General
+-------------------------------------------------------------------------------
+---@class nvim-ideify.winlayout.parent
+---@field [1] nvim-ideify.winlayout.depth
+---@field [2] nvim-ideify.winlayout.index
+---@field [3] nvim-ideify.winlayout.leaf
 
 -------------------------------------------------------------------------------
 -- Module Interfaces                                                         --

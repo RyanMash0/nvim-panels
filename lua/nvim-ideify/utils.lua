@@ -40,7 +40,7 @@ end
 
 ---
 ---@param err uv.error_name
----@return nvim-ideify.fs_err
+---@return nvim-ideify.enum.fs_err
 function M.check_err(err)
 	if not err then
 		return constants.fs_err.NONE
@@ -83,8 +83,8 @@ local function await_mkdir(path, mode)
 end
 
 ---
----@param check nvim-ideify.fs_err
----@param type nvim-ideify.fs_type
+---@param check nvim-ideify.enum.fs_err
+---@param type nvim-ideify.enum.fs_type
 ---@return boolean
 local function get_dir_exists(check, type)
 	return check == constants.fs_err.NONE and type == constants.fs_type.DIRECTORY
@@ -148,7 +148,7 @@ function M.mkdir_p_async(path, mode, callback)
 end
 
 ---
----@param type nvim-ideify.type
+---@param type nvim-ideify.enum.type
 ---@param id nvim-ideify.buf_id | nvim-ideify.win_id
 ---@param opts nvim-ideify.buf_opts | nvim-ideify.win_opts
 function M.set_opts(type, id, opts)
@@ -213,9 +213,31 @@ end
 
 ---
 ---@param position nvim-ideify.position
+---@return nvim-ideify.panel
+function M.get_panel_by_position(position)
+	return config.options.layout[position]
+end
+
+---
+---@param position nvim-ideify.position
+---@return nvim-ideify.module | nil
+function M.get_module_by_position(position)
+	return M.get_panel_by_position(position).module()
+end
+
+---
+---@param position nvim-ideify.position
+---@return nvim-ideify.module.state | nil
+function M.get_state_by_position(position)
+	local module = M.get_module_by_position(position)
+	return module and module.get_state() or nil
+end
+
+---
+---@param position nvim-ideify.position
 ---@return nvim-ideify.buf_id
 local function get_buf_by_position(position)
-	local module = config.options.layout[position].module()
+	local module = M.get_module_by_position(position)
 	return module and module.get_state().get_buffer() or constants.NOID
 end
 
@@ -226,7 +248,7 @@ function M.get_position_to_buf()
 	local buf
 	for _, pos in pairs(constants.position) do
 		buf = get_buf_by_position(pos)
-		position_to_buf[pos] = M.buf_valid(buf) or nil
+		position_to_buf[pos] = M.buf_valid(buf) and buf or nil
 	end
 	return position_to_buf
 end
@@ -255,7 +277,7 @@ end
 ---@param position nvim-ideify.position
 ---@return nvim-ideify.win_id
 local function get_win_by_position(position)
-	local module = config.options.layout[position].module()
+	local module = M.get_module_by_position(position)
 	return module and module.get_state().get_window() or constants.NOID
 end
 
@@ -266,13 +288,13 @@ function M.get_position_to_win()
 	local win
 	for _, pos in pairs(constants.position) do
 		win = get_win_by_position(pos)
-		position_to_win[pos] = M.win_valid(win) or nil
+		position_to_win[pos] = M.win_valid(win) and win or nil
 	end
 	return position_to_win
 end
 
 ---
----@return table<nvim-ideify.buf_id, nvim-ideify.position>
+---@return table<nvim-ideify.win_id, nvim-ideify.position>
 function M.get_win_to_position()
 	local win_to_position = {}
 	for position, win in pairs(M.get_position_to_win()) do
@@ -337,8 +359,8 @@ local function get_split_conf()
 	local splits = get_split_order_to_win()
 	local conf = {}
 	for i, position in ipairs(config.options.split_order) do
-		conf.type = splits[i] and M.position_to_split(position)
-		if conf.type then return conf end
+		conf.split = splits[i] and M.position_to_split(position)
+		if conf.split then return conf end
 	end
 
 	return {}
@@ -378,8 +400,7 @@ function M.check_or_make_main_win()
 		local buf_id = check_or_make_main_buf()
 		local win_conf = get_split_conf()
 		state.wins.main = vim.api.nvim_open_win(buf_id, true, win_conf)
-		local active = state.active
-		if active then require('nvim-ideify.ui').show() end
+		require('nvim-ideify').reset()
 		return
 	end
 
