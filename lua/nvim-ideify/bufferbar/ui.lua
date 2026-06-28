@@ -7,11 +7,19 @@ local constants = require('nvim-ideify.bufferbar.constants')
 local state = require('nvim-ideify.bufferbar.state')
 local utils = require('nvim-ideify.bufferbar.utils')
 
+---
+---@param str string
+---@param num integer
+---@return string
 local function truncate_end(str, num)
 	if #str <= num then return str end
 	return str:sub(1, num - 3) .. '...'
 end
 
+---
+---@param path string
+---@param num integer
+---@return string
 local function truncate_middle(path, num)
 	if #path <= num then return path end
 	local suffix = vim.fs.basename(path)
@@ -25,6 +33,10 @@ local function truncate_middle(path, num)
 	return prefix .. '/.../' .. suffix .. '/'
 end
 
+---
+---@param str string
+---@param num integer
+---@return string
 local function extend_length(str, num)
 	if #str == num then return str end
 	for _ = 1, num - #str do
@@ -33,9 +45,13 @@ local function extend_length(str, num)
 	return str
 end
 
+---
+---@param buf? nvim-ideify.buf_id
+---@return nvim-ideify.buf_id?
 local function buffer_delete(buf)
 	local cur_buf = g_utils.get_last_win_buf()
 	local del_entry = state.get_entry_by_buf(buf)
+	if not buf or not del_entry then return end
 	local del_pos = del_entry.position
 	local is_last_buf = del_pos == state.get_num_bufs()
 	local new_pos = is_last_buf and del_pos - 1 or del_pos + 1
@@ -51,23 +67,27 @@ local function buffer_delete(buf)
 	return new_buf
 end
 
+---
+---@return nvim-ideify.buf_id?
 local function buffer_switch()
 	local switch_buf = utils.get_sel_buffer()
 
 	return switch_buf
 end
 
+---
 function M.action()
 	local win_id = state.get_window()
 	local pos = vim.api.nvim_win_get_cursor(win_id)
 	local cur_col = pos[2]
-	local button = pos[1] == 1 and state.get_buf_by_button(cur_col)
+	local button = pos[1] == 1 and state.get_buf_by_button(cur_col) or nil
 	local check_button = button and not vim.bo[button].modified
 	local buf = check_button and buffer_delete(button) or buffer_switch()
 
 	g_utils.set_last_win_buf(buf)
 end
 
+---
 function M.highlight()
 	g_utils.check_or_make_main_win()
 	local buf_id = state.get_buffer()
@@ -117,6 +137,7 @@ function M.highlight()
 	end
 end
 
+---
 function M.render()
 	local buf_id = state.get_buffer()
 	if not g_utils.buf_valid(buf_id) then return end
@@ -144,11 +165,11 @@ function M.render()
 	local interact
 	local cur_len = 0
 	local minimal = config.options.minimal
-	local normal_pad_pre = config.options.styling.padding.normal.before
-	local min_pad_pre = config.options.styling.padding.minimal.before
+	local normal_pad_pre = config.options.styling.padding.normal.before_str
+	local min_pad_pre = config.options.styling.padding.minimal.before_str
 	local pad_pre = minimal and min_pad_pre or normal_pad_pre
-	local normal_pad_post = config.options.styling.padding.normal.after
-	local min_pad_post = config.options.styling.padding.minimal.after
+	local normal_pad_post = config.options.styling.padding.normal.after_str
+	local min_pad_post = config.options.styling.padding.minimal.after_str
 	local pad_post = minimal and min_pad_post or normal_pad_post
 	local sep = config.options.styling.separator
 	local close = config.options.styling.button.close

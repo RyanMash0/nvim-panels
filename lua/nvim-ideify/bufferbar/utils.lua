@@ -1,12 +1,18 @@
 local M = {}
 
 local config = require('nvim-ideify.bufferbar.config')
+local constants = require('nvim-ideify.bufferbar.constants')
 local state = require('nvim-ideify.bufferbar.state')
 
+---
+---@param str string
+---@return string
 function M.string_to_reg(str)
-	return str:gsub('([\\\\%.%*%^%$%[%]])', '\\%1')
+	return (str:gsub('([\\\\%.%*%^%$%[%]])', '\\%1'))
 end
 
+---
+---@return nvim-ideify.buf_id?
 function M.get_sel_buffer()
 	local win = state.get_window()
 	local col = vim.api.nvim_win_get_cursor(win)[2]
@@ -17,6 +23,7 @@ function M.get_sel_buffer()
 	end
 end
 
+---
 function M.buffer_yank()
 	local ui = require('nvim-ideify.bufferbar.ui')
 	local buf = M.get_sel_buffer()
@@ -25,6 +32,8 @@ function M.buffer_yank()
 	vim.schedule(ui.render)
 end
 
+---
+---@param offset integer
 local function buffer_put_rel(offset)
 	local ui = require('nvim-ideify.bufferbar.ui')
 	local sel = M.get_sel_buffer()
@@ -34,6 +43,7 @@ local function buffer_put_rel(offset)
 	local sel_info = state.get_entry_by_buf(sel)
 	local sel_pos = sel_info and sel_info.position
 	local yanked_info = state.get_entry_by_buf(yanked)
+	if not yanked_info then return end
 	local yanked_pos = yanked_info and yanked_info.position
 	local before = yanked_pos < sel_pos and 1 or 0
 
@@ -48,17 +58,21 @@ local function buffer_put_rel(offset)
 	vim.schedule(ui.render)
 end
 
+---
 function M.buffer_put_before()
 	buffer_put_rel(0)
 end
 
+---
 function M.buffer_put_after()
 	buffer_put_rel(1)
 end
 
+---
+---@param back nvim-ideify.bufferbar.enum.scroll
 function M.generate_buf_scroll(back)
 	return function()
-		local b = back == 'b'
+		local b = back == constants.scroll.BACK
 		local flags = 'W' .. back
 		local win = state.get_window()
 		local line = vim.api.nvim_win_get_cursor(win)[1]

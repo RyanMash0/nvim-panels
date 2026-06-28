@@ -1,6 +1,7 @@
 local M = {}
 
 local config = require('nvim-ideify.bufferbar.config')
+local constants = require('nvim-ideify.bufferbar.constants')
 local state = require('nvim-ideify.bufferbar.state')
 local ui = require('nvim-ideify.bufferbar.ui')
 local utils = require('nvim-ideify.bufferbar.utils')
@@ -8,6 +9,8 @@ local utils = require('nvim-ideify.bufferbar.utils')
 function M.setup()
 	local opts = { buffer = state.get_buffer(), remap = false }
 	local keys = config.options.keymaps
+	local f = constants.scroll.FORWARD
+	local b = constants.scroll.BACK
 
 	local action = vim.schedule_wrap(ui.action)
 	local clear_yanked = function()
@@ -30,10 +33,10 @@ function M.setup()
 	vim.keymap.set('n', keys.put_after, buffer_put_after, opts)
 	vim.keymap.set('n', keys.put_before, buffer_put_before, opts)
 	vim.keymap.set('n', keys.toggle_minimal, toggle_minimal, opts)
-	vim.keymap.set('n', keys.scroll_right, generate_buf_scroll(''), opts)
-	vim.keymap.set('n', keys.scroll_left, generate_buf_scroll('b'), opts)
-	vim.keymap.set('n', keys.mouse_scroll_left, generate_buf_scroll(''), opts)
-	vim.keymap.set('n', keys.mouse_scroll_right, generate_buf_scroll('b'), opts)
+	vim.keymap.set('n', keys.scroll_right, generate_buf_scroll(f), opts)
+	vim.keymap.set('n', keys.scroll_left, generate_buf_scroll(b), opts)
+	vim.keymap.set('n', keys.mouse_scroll_left, generate_buf_scroll(f), opts)
+	vim.keymap.set('n', keys.mouse_scroll_right, generate_buf_scroll(b), opts)
 
 	state.set_on_click(action)
 end

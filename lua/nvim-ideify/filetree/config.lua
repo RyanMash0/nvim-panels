@@ -1,3 +1,4 @@
+---@class nvim-ideify.filetree.config
 local M = {}
 
 M.defaults = {

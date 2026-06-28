@@ -9,8 +9,8 @@ local state = require('nvim-ideify.terminal.state')
 
 local shell = vim.opt.shell:get()
 
+---
 function M.render()
-	-- vim.api.nvim_open_term(term_buf, {})
 	local buf_id = state.get_buffer()
 	local win_id = state.get_window()
 

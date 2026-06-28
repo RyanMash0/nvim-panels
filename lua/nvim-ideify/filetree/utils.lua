@@ -1,11 +1,11 @@
 local M = {}
 
-local g_utils = require('nvim-ideify.utils')
 local g_constants = require('nvim-ideify.constants')
 
 local config = require('nvim-ideify.filetree.config')
 local state = require('nvim-ideify.filetree.state')
 
+---
 function M.go_to_dir()
 	local ui = require('nvim-ideify.filetree.ui')
 	vim.ui.input({
@@ -25,6 +25,8 @@ function M.go_to_dir()
 	end)
 end
 
+---
+---@param path string
 function M.unmark_subdirectories(path)
 	local target = state.get_target()
 	local relpath = vim.fs.relpath(path, target)
@@ -40,12 +42,17 @@ function M.unmark_subdirectories(path)
 	end
 end
 
+---
+---@param text string
+---@param path string
+---@param incl_base boolean
+---@return string[]
 function M.get_path_array(text, path, incl_base)
 	local win_id = state.get_window()
 	local win_conf = vim.api.nvim_win_get_config(win_id)
 	local size = win_conf.width or win_conf.height
 	local spaces = '    '
-	--local spaces = g_utils.repeat_str(' ', #text)
+	--local spaces = string.rep(' ', #text)
 
 	local path_item_array = {}
 	for parent in vim.fs.parents(path) do
@@ -76,6 +83,8 @@ function M.get_path_array(text, path, incl_base)
 	return path_array
 end
 
+---
+---@return string[]
 function M.get_target_array()
 	local target = state.get_target()
 	local cwd = vim.uv.cwd() or vim.fn.getcwd()
@@ -85,6 +94,8 @@ function M.get_target_array()
 	return M.get_path_array(' Target: ', target, true)
 end
 
+---
+---@return string[]
 function M.get_cwd_array()
 	local path = vim.uv.cwd() or vim.fn.getcwd()
 	local home_dir = vim.uv.os_homedir()
@@ -95,6 +106,8 @@ function M.get_cwd_array()
 	return M.get_path_array(' Working Dir: ', path, false)
 end
 
+---
+---@return string[]
 function M.get_default_header()
 	local win_id = state.get_window()
 	local win_conf = vim.api.nvim_win_get_config(win_id)
@@ -121,6 +134,8 @@ function M.get_default_header()
 	return header
 end
 
+---
+---@return string[]
 function M.get_full_header()
 	local header = config.options.header() or M.get_default_header()
 
@@ -134,6 +149,8 @@ function M.get_full_header()
 	return header
 end
 
+---
+---@return string, nvim-ideify.enum.fs_type
 function M.get_current_entry()
 	local win = state.get_window()
 	local line = vim.api.nvim_win_get_cursor(win)[1]
@@ -141,6 +158,7 @@ function M.get_current_entry()
 	return entry.path, entry.type
 end
 
+---
 function M.mark_target()
 	local ui = require('nvim-ideify.filetree.ui')
 	local fs_type = g_constants.fs_type
@@ -151,6 +169,7 @@ function M.mark_target()
 	vim.schedule(ui.render)
 end
 
+---
 function M.mark_source()
 	local ui = require('nvim-ideify.filetree.ui')
 	local path, _ = M.get_current_entry()
@@ -159,6 +178,7 @@ function M.mark_source()
 	vim.schedule(ui.render)
 end
 
+---
 function M.open_subdirectories()
 	local ui = require('nvim-ideify.filetree.ui')
 	local fs_type = g_constants.fs_type
@@ -177,6 +197,7 @@ function M.open_subdirectories()
 	vim.schedule(ui.render)
 end
 
+---
 function M.close_subdirectories()
 	local ui = require('nvim-ideify.filetree.ui')
 	local fs_type = g_constants.fs_type

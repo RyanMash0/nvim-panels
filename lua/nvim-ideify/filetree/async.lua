@@ -3,6 +3,8 @@ local M = {}
 local g_config = require('nvim-ideify.config')
 local g_constants = require('nvim-ideify.constants')
 
+---
+---@return nvim-ideify.filetree.log
 function M.new_log()
 	local data = {}
 	return {
@@ -15,6 +17,8 @@ function M.new_log()
 	}
 end
 
+---
+---@return nvim-ideify.filetree.verifier
 function M.new_verifier()
 	local data = {}
 	return {
@@ -27,6 +31,11 @@ function M.new_verifier()
 	}
 end
 
+---
+---@param co thread
+---@param log nvim-ideify.filetree.log
+---@param extra_log? nvim-ideify.filetree.log
+---@return nvim-ideify.filetree.process_counter
 function M.new_process_counter(co, log, extra_log)
 	local count = 0
 	return {
@@ -51,6 +60,8 @@ function M.new_process_counter(co, log, extra_log)
 	}
 end
 
+---@param path string
+---@return any ...
 function M.await_stat(path)
 	local co = coroutine.running()
 	vim.uv.fs_stat(path, function(err, stat)
@@ -64,6 +75,10 @@ function M.await_stat(path)
 	return coroutine.yield()
 end
 
+---
+---@param path string
+---@param path_verifier? nvim-ideify.filetree.verifier
+---@return string
 function M.await_unique_path(path, path_verifier)
 	local new_path = path
 	local base_name = vim.fs.basename(path)
@@ -87,6 +102,11 @@ function M.await_unique_path(path, path_verifier)
 	return new_path
 end
 
+---
+---@param start_path string
+---@param start_new_path string
+---@param err_log nvim-ideify.filetree.log
+---@return nvim-ideify.filetree.path_obj[], nvim-ideify.filetree.path_obj[]
 function M.await_get_items_recursive(start_path, start_new_path, err_log)
 	local co = coroutine.running()
 	local count = M.new_process_counter(co, err_log)
@@ -141,6 +161,12 @@ function M.await_get_items_recursive(start_path, start_new_path, err_log)
 	return dirs, files
 end
 
+---
+---@param dirs nvim-ideify.filetree.path_obj[]
+---@param err_log nvim-ideify.filetree.log
+---@param path_log nvim-ideify.filetree.log
+---@param log_new_paths boolean
+---@return any ...
 function M.await_mkdir_multi(dirs, err_log, path_log, log_new_paths)
 	local co = coroutine.running()
 	local count = M.new_process_counter(co, err_log, path_log)
@@ -163,6 +189,12 @@ function M.await_mkdir_multi(dirs, err_log, path_log, log_new_paths)
 	return coroutine.yield()
 end
 
+---
+---@param files nvim-ideify.filetree.path_obj[]
+---@param err_log nvim-ideify.filetree.log
+---@param path_log nvim-ideify.filetree.log
+---@param log_new_paths boolean
+---@return any ...
 function M.await_copy_multi(files, err_log, path_log, log_new_paths)
 	local co = coroutine.running()
 	local count = M.new_process_counter(co, err_log, path_log)
@@ -184,6 +216,10 @@ function M.await_copy_multi(files, err_log, path_log, log_new_paths)
 	return coroutine.yield()
 end
 
+---
+---@param path string
+---@param target string
+---@return any ...
 function M.await_copy_recursive(path, target)
 	local stat, err = vim.uv.fs_stat(path)
 	if err or not stat then return { { err = err, success = false } }, {} end
@@ -195,7 +231,7 @@ function M.await_copy_recursive(path, target)
 	local new_path = vim.fs.joinpath(target, basename)
 	new_path = M.await_unique_path(new_path)
 	if stat.type == fs_type.FILE or stat.type == fs_type.LINK then
-		return M.await_copy_multi({ { path, new_path, } }, err_log, path_log, true)
+		return M.await_copy_multi({ { path, new_path } }, err_log, path_log, true)
 	end
 
 	local tmp_err_log, tmp_path_log = M.await_mkdir_multi(
@@ -212,6 +248,9 @@ function M.await_copy_recursive(path, target)
 	return M.await_copy_multi(files, err_log, path_log, false)
 end
 
+---
+---@param path string
+---@return any ...
 function M.await_create_file(path)
 	local co = coroutine.running()
 	local permissions = g_config.options.permissions
@@ -229,6 +268,9 @@ function M.await_create_file(path)
 	return coroutine.yield()
 end
 
+---
+---@param path string
+---@return any ...
 function M.await_mkdir(path)
 	local co = coroutine.running()
 	local permissions = g_config.options.permissions
@@ -239,6 +281,9 @@ function M.await_mkdir(path)
 	return coroutine.yield()
 end
 
+---
+---@param items nvim-ideify.filetree.path_obj[]
+---@return any ...
 function M.await_move_multi(items)
 	local co = coroutine.running()
 	local err_log = M.new_log()

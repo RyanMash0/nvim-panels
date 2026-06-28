@@ -13,6 +13,8 @@ M.get_cwd_array = utils.get_cwd_array
 M.get_target_array = utils.get_target_array
 M.get_path_array = utils.get_path_array
 
+---
+---@return integer
 local function get_cur_line()
 	local win_id = state.get_window()
 	local pos = vim.api.nvim_win_get_cursor(win_id)
@@ -20,6 +22,8 @@ local function get_cur_line()
 	return math.max(pos[1], 1)
 end
 
+---
+---@param line integer
 local function set_cur_line(line)
 	local buf_id = state.get_buffer()
 	local win_id = state.get_window()
@@ -29,6 +33,9 @@ local function set_cur_line(line)
 	vim.api.nvim_win_set_cursor(win_id, { line, 0 })
 end
 
+---
+---@param start_line integer
+---@return integer
 local function get_entries(start_line)
 	local fs_type = g_constants.fs_type
 	local parent = state.get_entry_by_line(start_line)
@@ -86,6 +93,7 @@ local function get_entries(start_line)
 	return entries + extra
 end
 
+---
 local function print_paths()
 	local buf_id = state.get_buffer()
 	local cur_line = get_cur_line()
@@ -95,6 +103,8 @@ local function print_paths()
 	set_cur_line(cur_line)
 end
 
+---
+---@param line integer
 local function expand(line)
 	local parent = state.get_entry_by_line(line)
 	state.register_expanded(parent.path)
@@ -105,6 +115,8 @@ local function expand(line)
 	print_paths()
 end
 
+---
+---@param line integer
 local function close(line)
 	local parent = state.get_entry_by_line(line)
 	state.remove_expanded(parent.path)
@@ -128,6 +140,8 @@ local function close(line)
 	print_paths()
 end
 
+---
+---@param path string
 function M.change_dir(path)
 	g_utils.check_or_make_main_win()
 	vim.schedule(function()
@@ -142,6 +156,7 @@ function M.change_dir(path)
 	end)
 end
 
+---
 function M.ascend()
 	vim.schedule(function()
 		local cwd = vim.uv.cwd() or vim.fn.getcwd()
@@ -152,6 +167,7 @@ function M.ascend()
 	end)
 end
 
+---
 function M.descend()
 	local fs_type = g_constants.fs_type
 	local path, type = utils.get_current_entry()
@@ -160,6 +176,7 @@ function M.descend()
 	M.change_dir(path)
 end
 
+---
 function M.action()
 	local fs_type = g_constants.fs_type
 	local win = state.get_window()
@@ -203,6 +220,7 @@ function M.action()
 	return ''
 end
 
+---
 function M.highlight()
 	local fs_type = g_constants.fs_type
 	local buf_id = state.get_buffer()
@@ -249,6 +267,7 @@ function M.highlight()
 	end
 end
 
+---
 function M.render()
 	local fs_type = g_constants.fs_type
 	local path = vim.uv.cwd() or vim.fn.getcwd()

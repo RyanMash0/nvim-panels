@@ -1,3 +1,4 @@
+---@class nvim-ideify.bufferbar.config
 local M = {}
 
 M.defaults = {
@@ -17,17 +18,17 @@ M.defaults = {
 		button = {
 			close = ' 󰖭 ',
 			modified = ' \u{00A0}',
-			below = '\u{00A0}\u{00A0}\u{00A0}',
+			below = ' \u{2800}\u{00A0}',
 			pos = 5,
 		},
 		padding = {
 			normal = {
-				before = ' ',
-				after = '',
+				before = 1,
+				after = 0,
 			},
 			minimal = {
-				before = '',
-				after = '',
+				before = 0,
+				after = 0,
 			}
 		},
 	},
@@ -52,13 +53,26 @@ function M.setup(opts)
 	local utils = require('nvim-ideify.bufferbar.utils')
 	M.options = vim.tbl_deep_extend('force', M.defaults, opts or {})
 
-	M.options.regex = {}
+	M.options.styling.padding.normal.before_str = string.rep(
+		' ', M.options.styling.padding.normal.before
+	)
+	M.options.styling.padding.normal.after_str = string.rep(
+		' ', M.options.styling.padding.normal.after
+	)
+	M.options.styling.padding.minimal.before_str = string.rep(
+		' ', M.options.styling.padding.minimal.before
+	)
+	M.options.styling.padding.minimal.after_str = string.rep(
+		' ', M.options.styling.padding.minimal.after
+	)
 
-	M.options.regex.close = utils.string_to_reg(M.options.styling.button.close)
-	M.options.regex.modified = utils.string_to_reg(M.options.styling.button.modified)
-	M.options.regex.pad_pre = utils.string_to_reg(M.options.styling.padding.normal.before)
-	M.options.regex.min_pad_pre = utils.string_to_reg(M.options.styling.padding.minimal.before)
-	M.options.regex.separator = utils.string_to_reg(M.options.styling.separator)
+	M.options.regex = {
+		close = utils.string_to_reg(M.options.styling.button.close),
+		modified = utils.string_to_reg(M.options.styling.button.modified),
+		pad_pre = utils.string_to_reg(M.options.styling.padding.normal.before_str),
+		min_pad_pre = utils.string_to_reg(M.options.styling.padding.minimal.before_str),
+		separator = utils.string_to_reg(M.options.styling.separator),
+	}
 end
 
 function M.add_highlights()

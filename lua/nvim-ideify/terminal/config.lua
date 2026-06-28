@@ -1,7 +1,7 @@
+---@class nvim-ideify.terminal.config
 local M = {}
 
 M.defaults = {
-	base_statusline = '[Terminal]',
 	window = {
 		number = false,
 		winfixbuf = true,
@@ -9,6 +9,7 @@ M.defaults = {
 	buffer = {
 		buflisted = false,
 	},
+	base_statusline = '[Terminal]',
 	keymaps = {
 		esc = '<S-Esc>',
 		add = 'ba',

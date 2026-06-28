@@ -1,23 +1,24 @@
+---@class nvim-ideify.bufferbar
 local M = {}
 
 function M.get_config()
-	return require('nvim-ideify.bufferbar.config')
+	return (require('nvim-ideify.bufferbar.config'))
 end
 
 function M.get_constants()
-	return require('nvim-ideify.bufferbar.constants')
+	return (require('nvim-ideify.bufferbar.constants'))
 end
 
 function M.get_keymaps()
-	return require('nvim-ideify.bufferbar.keymaps')
+	return (require('nvim-ideify.bufferbar.keymaps'))
 end
 
 function M.get_state()
-	return require('nvim-ideify.bufferbar.state')
+	return (require('nvim-ideify.bufferbar.state'))
 end
 
 function M.get_ui()
-	return require('nvim-ideify.bufferbar.ui')
+	return (require('nvim-ideify.bufferbar.ui'))
 end
 
 function M.buffer_next()
@@ -40,6 +41,7 @@ function M.buffer_next()
 	local num_bufs = state.get_num_bufs()
 	new_pos = new_pos <= num_bufs and new_pos or 1
 	local new_buf = state.get_buf_by_pos(new_pos)
+	if not new_buf then return end
 
 	vim.api.nvim_win_set_buf(win, new_buf)
 end
@@ -64,6 +66,7 @@ function M.buffer_previous()
 	local num_bufs = state.get_num_bufs()
 	new_pos = new_pos >= 1 and new_pos or num_bufs
 	local new_buf = state.get_buf_by_pos(new_pos)
+	if not new_buf then return end
 
 	vim.api.nvim_win_set_buf(win, new_buf)
 end
@@ -72,8 +75,8 @@ vim.api.nvim_create_augroup('IDEifyBufferBar', { clear = true })
 vim.api.nvim_create_autocmd('BufEnter', {
 	group = 'IDEifyBufferBar',
 	callback = function(args)
-		local state = M.get_state()
-		local ui = M.get_ui()
+		local state = require('nvim-ideify.bufferbar.state')
+		local ui = require('nvim-ideify.bufferbar.ui')
 		local win = state.get_window()
 		local g_utils = require('nvim-ideify.utils')
 		local buf_entry = state.get_entry_by_buf(args.buf)
@@ -93,7 +96,7 @@ vim.api.nvim_create_autocmd('BufEnter', {
 vim.api.nvim_create_autocmd('BufModifiedSet', {
 	group = 'IDEifyBufferBar',
 	callback = function()
-		local ui = M.get_ui()
+		local ui = require('nvim-ideify.bufferbar.ui')
 		vim.schedule(ui.render)
 	end
 })
@@ -101,7 +104,7 @@ vim.api.nvim_create_autocmd('BufModifiedSet', {
 vim.api.nvim_create_autocmd({'BufAdd', 'BufNew'}, {
 	group = 'IDEifyBufferBar',
 	callback = function(args)
-		local state = M.get_state()
+		local state = require('nvim-ideify.bufferbar.state')
 		local buf = args.buf
 		if not state.get_entry_by_buf(buf) and vim.bo[buf].buflisted then
 			state.register_new_buf(buf)
@@ -112,8 +115,8 @@ vim.api.nvim_create_autocmd({'BufAdd', 'BufNew'}, {
 vim.api.nvim_create_autocmd('BufDelete', {
 	group = 'IDEifyBufferBar',
 	callback = function(args)
-		local state = M.get_state()
-		local ui = M.get_ui()
+		local state = require('nvim-ideify.bufferbar.state')
+		local ui = require('nvim-ideify.bufferbar.ui')
 		local buf = args.buf
 		local buf_entry = state.get_entry_by_buf(buf)
 		local position
@@ -128,7 +131,7 @@ vim.api.nvim_create_autocmd('BufDelete', {
 vim.api.nvim_create_autocmd('ColorScheme', {
 	group = 'IDEifyBufferBar',
 	callback = function()
-		local config = M.get_config()
+		local config = require('nvim-ideify.bufferbar.config')
 		config.add_highlights()
 	end
 })

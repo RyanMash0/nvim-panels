@@ -9,12 +9,13 @@
 -- Features                                                                  --
 -------------------------------------------------------------------------------
 ? Render debounce
+- Cancel certain file tree operations if source is a child of target
 - Add state saving on exit
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted by making single "eternal" buffer
 - Add empty sources acts on current line
-- Finish type annotations
-- Add documentation
+- Add documentation to functions
+- Add documentation files
 - Add health
 
 -------------------------------------------------------------------------------

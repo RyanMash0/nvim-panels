@@ -165,8 +165,9 @@ function M.get_last_win_buf()
 end
 
 ---
----@param buf nvim-ideify.buf_id
+---@param buf? nvim-ideify.buf_id
 function M.set_last_win_buf(buf)
+	if not buf then return end
 	M.check_or_make_main_win()
 	local last_win = M.win_valid(state.wins.last) and state.wins.last
 

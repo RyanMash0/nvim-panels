@@ -8,16 +8,28 @@ local state = require('nvim-ideify.filetree.state')
 local ui = require('nvim-ideify.filetree.ui')
 local utils = require('nvim-ideify.filetree.utils')
 
+---
+---@param err_log nvim-ideify.filetree.err_log_entry[]
 local function print_errors(err_log)
 	for _, item in ipairs(err_log) do
 		vim.notify(item.err or item, vim.log.levels.ERROR)
 	end
 end
 
+---
+---@param old string
+---@param new string
+---@param operation string
+---@return string
 local function get_success(old, new, operation)
 	return 'Successfully ' .. operation .. ' <' .. old .. '> to <' .. new .. '>'
 end
 
+---
+---@param path_log nvim-ideify.filtree.path_log_entry[]
+---@param operation string
+---@param change_entry boolean
+---@param delete boolean
 local function print_successes(path_log, operation, change_entry, delete)
 	if not path_log then return end
 	local old_path
@@ -35,6 +47,7 @@ local function print_successes(path_log, operation, change_entry, delete)
 	end
 end
 
+---
 function M.rename()
 	local path, _ = utils.get_current_entry()
 	local dirname = vim.fs.dirname(path)
@@ -47,7 +60,7 @@ function M.rename()
 			coroutine.wrap(function()
 				local new_path = vim.fs.joinpath(dirname, input)
 
-				local err_log, path_log = async.await_move_multi({ { path, new_path }, })
+				local err_log, path_log = async.await_move_multi({ { path, new_path } })
 
 				print_errors(err_log)
 				print_successes(path_log, 'renamed', true, false)
@@ -58,6 +71,9 @@ function M.rename()
 	)
 end
 
+---
+---@param path string
+---@return ...
 local function get_delete_prompt(path)
 	local co = coroutine.running()
 	local cwd = vim.uv.cwd() or vim.fn.getcwd()
@@ -86,6 +102,7 @@ local function get_delete_prompt(path)
 	return coroutine.yield()
 end
 
+---
 function M.delete()
 	local trash_path = g_config.options.trash_path
 	coroutine.wrap(function()
@@ -116,6 +133,7 @@ function M.delete()
 	end)()
 end
 
+---
 function M.move()
 	local target = state.get_target()
 	coroutine.wrap(function()
@@ -138,6 +156,7 @@ function M.move()
 	end)()
 end
 
+---
 function M.copy()
 	local target = state.get_target()
 	local err_logs = {}
@@ -163,6 +182,7 @@ function M.copy()
 	end)()
 end
 
+---
 function M.new_file()
 	local target = state.get_target()
 
@@ -185,6 +205,7 @@ function M.new_file()
 	)
 end
 
+---
 function M.new_dir()
 	local target = state.get_target()
 
