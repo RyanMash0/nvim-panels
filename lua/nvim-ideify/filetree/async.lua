@@ -293,6 +293,9 @@ function M.await_move_multi(items)
 
 	for _, item in ipairs(items) do
 		item[2] = M.await_unique_path(item[2], path_verifier)
+	end
+
+	for _, item in ipairs(items) do
 		count.increment()
 		vim.uv.fs_rename(item[1], item[2], function(err, success)
 			if err or not success then

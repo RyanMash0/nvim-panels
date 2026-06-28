@@ -91,7 +91,7 @@ vim.api.nvim_create_autocmd('WinEnter', {
 vim.api.nvim_create_autocmd('TextChanged', {
 	group = 'IDEify',
 	callback = function(args)
-		if not vim.bo[args.buf].filetype == 'netrw' then return end
+		if vim.bo[args.buf].filetype ~= 'netrw' then return end
 		local utils = require('nvim-ideify.utils')
 		local win = vim.api.nvim_get_current_win()
 		if utils.is_plugin_win(win) then

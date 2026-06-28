@@ -282,7 +282,7 @@ end
 
 ---
 ---@param position nvim-ideify.position
-local function unhide_panel(position)
+local function show_panel(position)
 	local panel = utils.get_panel_by_position(position)
 	local module = panel.module()
 	if panel.hidden or not module then
@@ -292,6 +292,7 @@ local function unhide_panel(position)
 	local mod_conf = module.get_config()
 	local mod_constants = module.get_constants()
 	local mod_state = module.get_state()
+	local mod_ui = module.get_ui()
 
 	local win_conf = get_module_win_config(mod_constants, position, panel)
 
@@ -303,6 +304,8 @@ local function unhide_panel(position)
 
 	local win_opts = mod_conf.options.window
 	utils.set_opts(constants.type.WIN, win, win_opts)
+
+	mod_ui.render()
 end
 
 ---
@@ -369,7 +372,7 @@ function M.show()
 	close_wins()
 
 	for _, position in ipairs(config.options.split_order) do
-		unhide_panel(position)
+		show_panel(position)
 	end
 
 	local key_opts = { expr = true, remap = false }

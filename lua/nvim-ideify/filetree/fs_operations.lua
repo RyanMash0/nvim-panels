@@ -62,10 +62,12 @@ function M.rename()
 
 				local err_log, path_log = async.await_move_multi({ { path, new_path } })
 
-				print_errors(err_log)
-				print_successes(path_log, 'renamed', true, false)
+				vim.schedule(function()
+					print_errors(err_log)
+					print_successes(path_log, 'renamed', true, false)
 
-				vim.schedule(ui.render)
+					ui.render()
+				end)
 			end)()
 		end
 	)
@@ -73,7 +75,7 @@ end
 
 ---
 ---@param path string
----@return ...
+---@return any ...
 local function get_delete_prompt(path)
 	local co = coroutine.running()
 	local cwd = vim.uv.cwd() or vim.fn.getcwd()
@@ -125,11 +127,13 @@ function M.delete()
 
 		local err_log, path_log = async.await_move_multi(items)
 
-		print_errors(err_log)
-		print_successes(path_log, 'moved', true, true)
+		vim.schedule(function()
+			print_errors(err_log)
+			print_successes(path_log, 'moved', true, true)
 
-		vim.schedule(state.clear_marked)
-		vim.schedule(ui.render)
+			state.clear_marked()
+			ui.render()
+		end)
 	end)()
 end
 
@@ -148,11 +152,13 @@ function M.move()
 
 		local err_log, path_log = async.await_move_multi(items)
 
-		print_errors(err_log)
-		print_successes(path_log, 'moved', true, false)
+		vim.schedule(function()
+			print_errors(err_log)
+			print_successes(path_log, 'moved', true, true)
 
-		vim.schedule(state.clear_marked)
-		vim.schedule(ui.render)
+			state.clear_marked()
+			ui.render()
+		end)
 	end)()
 end
 
@@ -169,16 +175,18 @@ function M.copy()
 			table.insert(path_logs, path_log)
 		end
 
-		for _, item in ipairs(err_logs) do
-			print_errors(item)
-		end
+		vim.schedule(function()
+			for _, item in ipairs(err_logs) do
+				print_errors(item)
+			end
 
-		for _, item in ipairs(path_logs) do
-			print_successes(item, 'copied', false, false)
-		end
+			for _, item in ipairs(path_logs) do
+				print_successes(item, 'copied', false, false)
+			end
 
-		vim.schedule(state.clear_marked)
-		vim.schedule(ui.render)
+			state.clear_marked()
+			ui.render()
+		end)
 	end)()
 end
 
@@ -194,12 +202,15 @@ function M.new_file()
 			coroutine.wrap(function()
 				local new_path = vim.fs.joinpath(target, input)
 				local err, success = async.await_create_file(new_path)
-				if err then
-					print_errors({ { err = err, success = success } })
-				end
 
-				vim.schedule(state.clear_marked)
-				vim.schedule(ui.render)
+				vim.schedule(function()
+					if err then
+						print_errors({ { err = err, success = success } })
+					end
+
+					state.clear_marked()
+					ui.render()
+				end)
 			end)()
 		end
 	)
@@ -217,12 +228,15 @@ function M.new_dir()
 			coroutine.wrap(function()
 				local new_path = vim.fs.joinpath(target, input)
 				local err, success = async.await_mkdir(new_path)
-				if err then
-					print_errors({ { err = err, success = success } })
-				end
 
-				vim.schedule(state.clear_marked)
-				vim.schedule(ui.render)
+				vim.schedule(function()
+					if err then
+						print_errors({ { err = err, success = success } })
+					end
+
+					state.clear_marked()
+					ui.render()
+				end)
 			end)()
 		end
 	)
