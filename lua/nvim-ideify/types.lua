@@ -129,9 +129,9 @@
 ---@field [3] nvim-ideify.win_id
 
 ---@class nvim-ideify.editor_win
----@field parent nvim-ideify.parent_win_entry
----@field config nvim-ideify.win_config
----@field buffer nvim-ideify.buf_id
+---@field parent? nvim-ideify.parent_win_entry
+---@field config? nvim-ideify.win_config
+---@field buffer? nvim-ideify.buf_id
 ---@field id nvim-ideify.win_id
 
 ---@class nvim-ideify.state

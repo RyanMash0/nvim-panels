@@ -4,7 +4,8 @@ local g_config = require('nvim-ideify.config')
 local g_constants = require('nvim-ideify.constants')
 
 ---
----@return nvim-ideify.filetree.log
+---@generic T
+---@return nvim-ideify.filetree.log<T>
 function M.new_log()
 	local data = {}
 	return {
@@ -18,7 +19,8 @@ function M.new_log()
 end
 
 ---
----@return nvim-ideify.filetree.verifier
+---@generic T
+---@return nvim-ideify.filetree.verifier<T>
 function M.new_verifier()
 	local data = {}
 	return {
@@ -33,10 +35,10 @@ end
 
 ---
 ---@param co thread
----@param log nvim-ideify.filetree.log
----@param extra_log? nvim-ideify.filetree.log
+---@param err_log nvim-ideify.filetree.log<nvim-ideify.filetree.err_log_entry>
+---@param path_log? nvim-ideify.filetree.log<nvim-ideify.filetree.path_log_entry>
 ---@return nvim-ideify.filetree.process_counter
-function M.new_process_counter(co, log, extra_log)
+function M.new_process_counter(co, err_log, path_log)
 	local count = 0
 	return {
 		increment = function()
@@ -48,8 +50,8 @@ function M.new_process_counter(co, log, extra_log)
 				vim.schedule(function()
 					coroutine.resume(
 						co,
-						log.get_data(),
-						extra_log and extra_log.get_data()
+						err_log.get_data(),
+						path_log and path_log.get_data()
 					)
 				end)
 			end
@@ -61,7 +63,7 @@ function M.new_process_counter(co, log, extra_log)
 end
 
 ---@param path string
----@return any ...
+---@return boolean
 function M.await_stat(path)
 	local co = coroutine.running()
 	vim.uv.fs_stat(path, function(err, stat)
@@ -77,7 +79,7 @@ end
 
 ---
 ---@param path string
----@param path_verifier? nvim-ideify.filetree.verifier
+---@param path_verifier? nvim-ideify.filetree.verifier<string>
 ---@return string
 function M.await_unique_path(path, path_verifier)
 	local new_path = path
@@ -105,8 +107,8 @@ end
 ---
 ---@param start_path string
 ---@param start_new_path string
----@param err_log nvim-ideify.filetree.log
----@return nvim-ideify.filetree.path_obj[], nvim-ideify.filetree.path_obj[]
+---@param err_log nvim-ideify.filetree.log<nvim-ideify.filetree.err_log_entry>
+---@return nvim-ideify.filetree.path_obj[][], nvim-ideify.filetree.path_obj[]
 function M.await_get_items_recursive(start_path, start_new_path, err_log)
 	local co = coroutine.running()
 	local count = M.new_process_counter(co, err_log)
@@ -163,10 +165,10 @@ end
 
 ---
 ---@param dirs nvim-ideify.filetree.path_obj[]
----@param err_log nvim-ideify.filetree.log
----@param path_log nvim-ideify.filetree.log
+---@param err_log nvim-ideify.filetree.log<nvim-ideify.filetree.err_log_entry>
+---@param path_log nvim-ideify.filetree.log<nvim-ideify.filetree.path_log_entry>
 ---@param log_new_paths boolean
----@return any ...
+---@return nvim-ideify.filetree.err_log_entry[], nvim-ideify.filetree.path_log_entry[]
 function M.await_mkdir_multi(dirs, err_log, path_log, log_new_paths)
 	local co = coroutine.running()
 	local count = M.new_process_counter(co, err_log, path_log)
@@ -191,10 +193,10 @@ end
 
 ---
 ---@param files nvim-ideify.filetree.path_obj[]
----@param err_log nvim-ideify.filetree.log
----@param path_log nvim-ideify.filetree.log
+---@param err_log nvim-ideify.filetree.log<nvim-ideify.filetree.err_log_entry>
+---@param path_log nvim-ideify.filetree.log<nvim-ideify.filetree.path_log_entry>
 ---@param log_new_paths boolean
----@return any ...
+---@return nvim-ideify.filetree.err_log_entry[], nvim-ideify.filetree.path_log_entry[]
 function M.await_copy_multi(files, err_log, path_log, log_new_paths)
 	local co = coroutine.running()
 	local count = M.new_process_counter(co, err_log, path_log)
@@ -219,7 +221,7 @@ end
 ---
 ---@param path string
 ---@param target string
----@return any ...
+---@return nvim-ideify.filetree.err_log_entry[], nvim-ideify.filetree.path_log_entry[]
 function M.await_copy_recursive(path, target)
 	local stat, err = vim.uv.fs_stat(path)
 	if err or not stat then return { { err = err, success = false } }, {} end
@@ -250,7 +252,7 @@ end
 
 ---
 ---@param path string
----@return any ...
+---@return string?, boolean?
 function M.await_create_file(path)
 	local co = coroutine.running()
 	local permissions = g_config.options.permissions
@@ -270,7 +272,7 @@ end
 
 ---
 ---@param path string
----@return any ...
+---@return string?, boolean?
 function M.await_mkdir(path)
 	local co = coroutine.running()
 	local permissions = g_config.options.permissions
@@ -283,7 +285,7 @@ end
 
 ---
 ---@param items nvim-ideify.filetree.path_obj[]
----@return any ...
+---@return nvim-ideify.filetree.err_log_entry[], nvim-ideify.filetree.path_log_entry[]
 function M.await_move_multi(items)
 	local co = coroutine.running()
 	local err_log = M.new_log()

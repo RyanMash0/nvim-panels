@@ -41,9 +41,8 @@ end
 ---@return string
 local function extend_length(str, num)
 	if #str == num then return str end
-	for _ = 1, num - #str do
-		str = str .. ' '
-	end
+	str = str .. string.rep(' ', num - #str)
+
 	return str
 end
 

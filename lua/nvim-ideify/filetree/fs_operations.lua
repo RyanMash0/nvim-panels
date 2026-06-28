@@ -12,7 +12,7 @@ local utils = require('nvim-ideify.filetree.utils')
 ---@param err_log nvim-ideify.filetree.err_log_entry[]
 local function print_errors(err_log)
 	for _, item in ipairs(err_log) do
-		vim.notify(item.err or item, vim.log.levels.ERROR)
+		vim.notify(item.err, vim.log.levels.ERROR)
 	end
 end
 
@@ -26,7 +26,7 @@ local function get_success(old, new, operation)
 end
 
 ---
----@param path_log nvim-ideify.filtree.path_log_entry[]
+---@param path_log nvim-ideify.filetree.path_log_entry[]
 ---@param operation string
 ---@param change_entry boolean
 ---@param delete boolean
@@ -75,7 +75,7 @@ end
 
 ---
 ---@param path string
----@return any ...
+---@return nvim-ideify.filetree.enum.trash_confirm
 local function get_delete_prompt(path)
 	local co = coroutine.running()
 	local cwd = vim.uv.cwd() or vim.fn.getcwd()

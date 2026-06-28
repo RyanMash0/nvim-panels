@@ -5,8 +5,8 @@
 -------------------------------------------------------------------------------
 
 ---@alias nvim-ideify.filetree.do_tree_iterator fun(_: nil, i: integer): integer?, nvim-ideify.filetree.entry?
----@alias nvim-ideify.filtree.path_log_entry string
 ---@alias nvim-ideify.filetree.path_obj [string, string]
+---@alias nvim-ideify.filetree.path_log_entry nvim-ideify.filetree.path_obj
 
 -------------------------------------------------------------------------------
 -- Init                                                                      --
@@ -72,12 +72,12 @@
 -------------------------------------------------------------------------------
 
 ---@generic T
----@class nvim-ideify.filetree.log
+---@class nvim-ideify.filetree.log<T>
 ---@field add_data fun(new_data: T)
 ---@field get_data fun(): T[]
 
 ---@generic T
----@class nvim-ideify.filetree.verifier
+---@class nvim-ideify.filetree.verifier<T>
 ---@field add_data fun(item: T)
 ---@field verify fun(item: T): boolean
 
@@ -87,6 +87,6 @@
 ---@field get fun(): integer
 
 ---@class nvim-ideify.filetree.err_log_entry
----@field err string
----@field success boolean
+---@field err? string
+---@field success? boolean
 ---@field path? string

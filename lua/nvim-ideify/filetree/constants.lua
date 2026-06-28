@@ -12,7 +12,7 @@ M.config = {
 ---@type nvim-ideify.ns_id
 M.namespace = vim.api.nvim_create_namespace('IDEifyFileTree')
 
----@enum nvim-ideify.filetree.trash_confirm
+---@enum nvim-ideify.filetree.enum.trash_confirm
 M.confirm = {
 	N = 0,
 	Y = 1,

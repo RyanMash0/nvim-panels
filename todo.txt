@@ -1,14 +1,13 @@
 -------------------------------------------------------------------------------
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
-- Buffer bar path when changing parent directory
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
 -------------------------------------------------------------------------------
 ? Render debounce
-? Store height of windows and/or quickfix window
 ? Investigate semi-global table
+- Add support for links in file tree
 - Add state saving on exit
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted by making single "eternal" buffer
