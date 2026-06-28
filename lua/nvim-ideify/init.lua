@@ -91,11 +91,12 @@ vim.api.nvim_create_autocmd('WinEnter', {
 vim.api.nvim_create_autocmd('TextChanged', {
 	group = 'IDEify',
 	callback = function(args)
+		if not vim.bo[args.buf].filetype == 'netrw' then return end
 		local utils = require('nvim-ideify.utils')
-		local buf = args.buf
-		if utils.is_plugin_buf(buf) and vim.bo[buf].filetype == 'netrw' then
-			local buf_to_pos = utils.get_buf_to_position()
-			ui.module_buf_reload(buf_to_pos[args.buf])
+		local win = vim.api.nvim_get_current_win()
+		if utils.is_plugin_win(win) then
+			local win_to_pos = utils.get_win_to_position()
+			ui.module_buf_reload(win_to_pos[win])
 		end
 	end
 })

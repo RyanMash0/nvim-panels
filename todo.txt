@@ -9,6 +9,9 @@
 -- Features                                                                  --
 -------------------------------------------------------------------------------
 ? Render debounce
+- Investigate semi-global table
+- Make netrw autocommand buffer local
+- Store height of windows and/or quickfix window
 - Cancel certain file tree operations if source is a child of target
 - Add state saving on exit
 - Add home screen on blank buffer and only allow single buffer instance when
