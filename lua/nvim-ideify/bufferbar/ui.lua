@@ -7,6 +7,8 @@ local constants = require('nvim-ideify.bufferbar.constants')
 local state = require('nvim-ideify.bufferbar.state')
 local utils = require('nvim-ideify.bufferbar.utils')
 
+local home_dir = vim.uv.os_homedir() or ''
+
 ---
 ---@param str string
 ---@param num integer
@@ -21,7 +23,7 @@ end
 ---@param num integer
 ---@return string
 local function truncate_middle(path, num)
-	if #path <= num then return path end
+	if #path <= num then return path .. '/' end
 	local suffix = vim.fs.basename(path)
 	local tmp = path
 	local prefix
@@ -73,6 +75,26 @@ local function buffer_switch()
 	local switch_buf = utils.get_sel_buffer()
 
 	return switch_buf
+end
+
+---
+---@param dir_name string
+---@return string
+local function get_rel_dirname(dir_name)
+	local cwd = vim.uv.cwd() or vim.fn.getcwd()
+	local path
+
+	if dir_name == cwd then return '.' end
+
+	path = vim.fs.relpath(cwd, dir_name)
+	if path then return './' .. path end
+
+	if dir_name == home_dir then return '~' end
+
+	path = vim.fs.relpath(home_dir, dir_name)
+	if path then return '~/' .. path end
+
+	return dir_name
 end
 
 ---
@@ -178,16 +200,13 @@ function M.render()
 	local button_pos = config.options.styling.button.pos
 	local extra_len = #pad_pre + #pad_post + #close
 	local sep_len = #sep
-	local cwd = vim.uv.cwd() or vim.fn.getcwd()
 
 	for i, buf in state.buf_iterator() do
 		buf_name = vim.api.nvim_buf_get_name(buf)
 
 		dir_name = vim.fs.dirname(buf_name)
-		dir_name = vim.fs.relpath(cwd, dir_name) or ''
-		if dir_name == '.' then dir_name = '' end
+		dir_name = get_rel_dirname(dir_name)
 		dir_name = truncate_middle(dir_name, pref_len)
-		dir_name = './' .. dir_name
 
 		truncate_len = math.max(pref_len, #dir_name)
 		file_name = vim.fs.basename(buf_name)
