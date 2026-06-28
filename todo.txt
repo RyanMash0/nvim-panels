@@ -9,7 +9,6 @@
 ? Render debounce
 ? Store height of windows and/or quickfix window
 ? Investigate semi-global table
-- Cancel certain file tree operations if source is a child of target
 - Add state saving on exit
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted by making single "eternal" buffer

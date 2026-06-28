@@ -292,7 +292,9 @@ function M.await_move_multi(items)
 	local count = M.new_process_counter(co, err_log, path_log)
 
 	for _, item in ipairs(items) do
-		item[2] = M.await_unique_path(item[2], path_verifier)
+		if item[1] ~= item[2] then
+			item[2] = M.await_unique_path(item[2], path_verifier)
+		end
 	end
 
 	for _, item in ipairs(items) do
