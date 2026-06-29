@@ -129,4 +129,20 @@ function M.generate_buf_scroll(back)
 	end
 end
 
+---
+function M.set_cursor()
+	local g_utils = require('nvim-ideify.utils')
+	local buf = vim.api.nvim_get_current_buf()
+	local buf_entry = state.get_entry_by_buf(buf)
+	local win = state.get_window()
+	if buf_entry and g_utils.win_valid(win) then
+		vim.api.nvim_win_set_cursor(win, { 2, buf_entry.last })
+		vim.api.nvim_win_set_cursor(win, { 2, buf_entry.first })
+		vim.api.nvim_win_set_cursor(win, { 2, buf_entry.first + 1 })
+		vim.api.nvim_win_call(win, function()
+			vim.fn.winrestview({ topline = 1 })
+		end)
+	end
+end
+
 return M

@@ -248,6 +248,7 @@ function M.render()
 	vim.api.nvim_buf_set_lines(buf_id, 0, -1, true, {dir_str, file_str})
 	vim.bo[buf_id].modifiable = false
 	M.highlight()
+	utils.set_cursor()
 end
 
 return M

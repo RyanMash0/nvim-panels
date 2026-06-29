@@ -86,23 +86,10 @@ end
 vim.api.nvim_create_augroup('IDEifyBufferBar', { clear = true })
 vim.api.nvim_create_autocmd('BufEnter', {
 	group = 'IDEifyBufferBar',
-	callback = function(args)
+	callback = function()
 		if not g_state.active then return end
-		local state = require('nvim-ideify.bufferbar.state')
 		local ui = require('nvim-ideify.bufferbar.ui')
-		local win = state.get_window()
-		local g_utils = require('nvim-ideify.utils')
-		local buf_entry = state.get_entry_by_buf(args.buf)
-
-		vim.schedule(function()
-			if buf_entry and buf_entry.first and g_utils.win_valid(win) then
-				vim.api.nvim_win_set_cursor(win, { 2, buf_entry.last})
-				vim.api.nvim_win_set_cursor(win, { 2, buf_entry.first})
-				vim.api.nvim_win_set_cursor(win, { 1, buf_entry.first + 1})
-			end
-
-			ui.render()
-		end)
+		vim.schedule(ui.render)
 	end
 })
 
