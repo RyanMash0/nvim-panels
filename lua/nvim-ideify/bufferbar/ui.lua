@@ -73,9 +73,7 @@ end
 ---
 ---@return nvim-ideify.buf_id?
 local function buffer_switch()
-	local switch_buf = utils.get_sel_buffer()
-
-	return switch_buf
+	return utils.get_sel_buffer()
 end
 
 ---
@@ -124,7 +122,6 @@ function M.highlight()
 	local yank_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarYank')
 	local close_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarClose')
 	local modified_hl_group = vim.api.nvim_get_hl_id_by_name('IDEifyBufferBarModified')
-	if not hl_region or hl_region == vim.NIL then return end
 	local button_len = #config.options.styling.button.close
 
 	for buf, entry in state.buf_entries_iterator() do
@@ -135,7 +132,7 @@ function M.highlight()
 		})
 	end
 
-	if cur_buf ~= yanked then
+	if cur_buf ~= yanked and hl_region then
 		vim.api.nvim_buf_set_extmark(buf_id, ns, 0, hl_region.first, {
 			end_col = hl_region.last,
 			hl_group = hl_group,
