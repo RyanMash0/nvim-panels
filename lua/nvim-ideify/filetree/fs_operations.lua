@@ -12,7 +12,7 @@ local utils = require('nvim-ideify.filetree.utils')
 ---@param err_log nvim-ideify.filetree.err_log_entry[]
 local function print_errors(err_log)
 	for _, item in ipairs(err_log) do
-		vim.notify(item.err, vim.log.levels.ERROR)
+		vim.notify(item.err or 'Error occurred', vim.log.levels.ERROR)
 	end
 end
 

@@ -11,7 +11,7 @@ function M.go_to_dir()
 	local fs_type = g_constants.fs_type
 	vim.ui.input({
 		prompt = "Path: ",
-		completion = fs_type.FILE,
+		completion = 'dir',
 	}, function(input)
 		if not input then return end
 		local path = vim.fs.normalize(input)
