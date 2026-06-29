@@ -24,15 +24,17 @@ end
 ---@return string
 local function truncate_middle(path, num)
 	if #path <= num then return path .. '/' end
+	local base = path:match('^[^/]?/') or ''
+	path = path:gsub('^[^/]?/', '')
 	local suffix = vim.fs.basename(path)
 	local tmp = path
 	local prefix
-	while tmp ~= '.' do
+	while tmp ~= '.' and tmp ~= prefix do
 		prefix = tmp
 		tmp = vim.fs.dirname(tmp)
 	end
 
-	return prefix .. '/.../' .. suffix .. '/'
+	return base .. prefix .. '/.../' .. suffix .. '/'
 end
 
 ---
