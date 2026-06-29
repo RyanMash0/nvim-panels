@@ -68,7 +68,7 @@
 ---@field type nvim-ideify.enum.fs_type
 
 -------------------------------------------------------------------------------
--- Async                                                                     --
+-- Async/FS Operations                                                       --
 -------------------------------------------------------------------------------
 
 ---@generic T
@@ -90,3 +90,11 @@
 ---@field err? string
 ---@field success? boolean
 ---@field path? string
+
+---@class nvim-ideify.filetree.path_list
+---@field add_path fun(path: string)
+---@field get_paths fun(): nvim-ideify.filetree.path_obj[]
+
+---@class nvim-ideify.filetree.copy_log
+---@field copy_path fun(path: string)
+---@field get_logs fun(): nvim-ideify.filetree.err_log_entry[][], nvim-ideify.filetree.path_log_entry[][]

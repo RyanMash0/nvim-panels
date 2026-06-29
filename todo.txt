@@ -11,7 +11,6 @@
 - Add state saving on exit
 - Add home screen on blank buffer and only allow single buffer instance when
   all buffers deleted by making single "eternal" buffer
-- Add empty sources acts on current line
 - Add documentation to functions
 - Add documentation files
 - Add health

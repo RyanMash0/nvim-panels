@@ -48,6 +48,23 @@ local function print_successes(path_log, operation, change_entry, delete)
 end
 
 ---
+---@param target string
+---@return nvim-ideify.filetree.path_list
+local function new_path_list(target)
+	local items = {}
+	return {
+		add_path = function(path)
+			local basename = vim.fs.basename(path)
+			local new_path = vim.fs.joinpath(target, basename)
+			table.insert(items, { path, new_path })
+		end,
+		get_paths = function()
+			return items
+		end,
+	}
+end
+
+---
 function M.rename()
 	local path, _ = utils.get_current_entry()
 	local dirname = vim.fs.dirname(path)
@@ -55,7 +72,7 @@ function M.rename()
 	vim.ui.input(
 		{prompt = 'Rename ' .. basename .. ' to: ',},
 		function(input)
-			if input == nil then input = basename end
+			if input == nil then return end
 
 			coroutine.wrap(function()
 				local new_path = vim.fs.joinpath(dirname, input)
@@ -106,26 +123,32 @@ end
 
 ---
 function M.delete()
-	local trash_path = g_config.options.trash_path
 	coroutine.wrap(function()
-		local basename
-		local new_path
-		local items = {}
+		local path_list = new_path_list(g_config.options.trash_path)
 		local confirm = constants.confirm
 		local response = confirm.Y
+		local empty = true
+
 		for path in state.sources_iterator() do
+			empty = false
 			if response ~= confirm.A then
 				response = get_delete_prompt(path)
 			end
 
 			if response ~= confirm.N then
-				basename = vim.fs.basename(path)
-				new_path = vim.fs.joinpath(trash_path, basename)
-				table.insert(items, { path, new_path })
+				path_list.add_path(path)
 			end
 		end
 
-		local err_log, path_log = async.await_move_multi(items)
+		if empty then
+			local item = utils.get_current_entry()
+			response = get_delete_prompt(item)
+			if response ~= confirm.N then
+				path_list.add_path(item)
+			end
+		end
+
+		local err_log, path_log = async.await_move_multi(path_list.get_paths())
 
 		vim.schedule(function()
 			print_errors(err_log)
@@ -139,18 +162,20 @@ end
 
 ---
 function M.move()
-	local target = state.get_target()
 	coroutine.wrap(function()
-		local basename
-		local new_path
-		local items = {}
+		local path_list = new_path_list(state.get_target())
+		local empty = true
 		for path in state.sources_iterator() do
-			basename = vim.fs.basename(path)
-			new_path = vim.fs.joinpath(target, basename)
-			table.insert(items, { path, new_path })
+			empty = false
+			path_list.add_path(path)
 		end
 
-		local err_log, path_log = async.await_move_multi(items)
+		if empty then
+			local item = utils.get_current_entry()
+			path_list.add_path(item)
+		end
+
+		local err_log, path_log = async.await_move_multi(path_list.get_paths())
 
 		vim.schedule(function()
 			print_errors(err_log)
@@ -163,17 +188,39 @@ function M.move()
 end
 
 ---
-function M.copy()
-	local target = state.get_target()
+---@param target string
+---@return nvim-ideify.filetree.copy_log
+local function new_copy_log(target)
 	local err_logs = {}
 	local path_logs = {}
-	local err_log, path_log
-	coroutine.wrap(function()
-		for path in state.sources_iterator() do
-			err_log, path_log = async.await_copy_recursive(path, target)
+	return {
+		copy_path = function(path)
+			local err_log, path_log = async.await_copy_recursive(path, target)
 			table.insert(err_logs, err_log)
 			table.insert(path_logs, path_log)
+		end,
+		get_logs = function()
+			return err_logs, path_logs
+		end,
+	}
+end
+
+---
+function M.copy()
+	coroutine.wrap(function()
+		local log = new_copy_log(state.get_target())
+		local empty = true
+		for path in state.sources_iterator() do
+			empty = false
+			log.copy_path(path)
 		end
+
+		if empty then
+			local item = utils.get_current_entry()
+			log.copy_path(item)
+		end
+
+		local err_logs, path_logs = log.get_logs()
 
 		vim.schedule(function()
 			for _, item in ipairs(err_logs) do
