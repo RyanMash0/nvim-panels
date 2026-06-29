@@ -1,12 +1,16 @@
 -------------------------------------------------------------------------------
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
+- Buffer bar highlighting does not work on netrw
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
 -------------------------------------------------------------------------------
 ? Render debounce
 ? Investigate semi-global table
+? Add sorting support for file tree
+? Investigate partial text refresh on file tree
+- Add completion to builtin commands
 - Add support for links in file tree
 - Add state saving on exit
 - Add home screen on blank buffer and only allow single buffer instance when

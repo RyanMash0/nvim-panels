@@ -1,6 +1,8 @@
 ---@class nvim-ideify.bufferbar
 local M = {}
 
+local g_state = require('nvim-ideify.state')
+
 function M.get_config()
 	return (require('nvim-ideify.bufferbar.config'))
 end
@@ -23,12 +25,10 @@ end
 
 function M.buffer_next()
 	local g_utils = require('nvim-ideify.utils')
-	local g_state = require('nvim-ideify.state')
 	local state = require('nvim-ideify.bufferbar.state')
 	if not g_state.opened then
-		local cmd = vim.api.nvim_replace_termcodes('<Cmd>', true, false, false)
-		local cr = vim.api.nvim_replace_termcodes('<CR>', true, false, false)
-		vim.api.nvim_feedkeys(cmd .. 'bn' .. cr, 'n', false)
+		vim.cmd('bnext')
+		return
 	end
 
 	local win = vim.api.nvim_get_current_win()
@@ -36,24 +36,29 @@ function M.buffer_next()
 
 	local cur_buf = vim.api.nvim_win_get_buf(win)
 	local cur_buf_entry = state.get_entry_by_buf(cur_buf)
-	if not cur_buf_entry then return end
+	if not cur_buf_entry then
+		vim.cmd('bnext')
+		return
+	end
+
 	local new_pos = cur_buf_entry.position + 1
 	local num_bufs = state.get_num_bufs()
 	new_pos = new_pos <= num_bufs and new_pos or 1
 	local new_buf = state.get_buf_by_pos(new_pos)
-	if not new_buf then return end
+	if not new_buf then
+		vim.cmd('bnext')
+		return
+	end
 
 	vim.api.nvim_win_set_buf(win, new_buf)
 end
 
 function M.buffer_previous()
 	local g_utils = require('nvim-ideify.utils')
-	local g_state = require('nvim-ideify.state')
 	local state = require('nvim-ideify.bufferbar.state')
 	if not g_state.opened then
-		local cmd = vim.api.nvim_replace_termcodes('<Cmd>', true, false, false)
-		local cr = vim.api.nvim_replace_termcodes('<CR>', true, false, false)
-		vim.api.nvim_feedkeys(cmd .. 'bp' .. cr, 'n', false)
+		vim.cmd('bprevious')
+		return
 	end
 
 	local win = vim.api.nvim_get_current_win()
@@ -61,12 +66,19 @@ function M.buffer_previous()
 
 	local cur_buf = vim.api.nvim_win_get_buf(win)
 	local cur_buf_entry = state.get_entry_by_buf(cur_buf)
-	if not cur_buf_entry then return end
+	if not cur_buf_entry then
+		vim.cmd('bprevious')
+		return
+	end
+
 	local new_pos = cur_buf_entry.position - 1
 	local num_bufs = state.get_num_bufs()
 	new_pos = new_pos >= 1 and new_pos or num_bufs
 	local new_buf = state.get_buf_by_pos(new_pos)
-	if not new_buf then return end
+	if not new_buf then
+		vim.cmd('bprevious')
+		return
+	end
 
 	vim.api.nvim_win_set_buf(win, new_buf)
 end
@@ -75,6 +87,7 @@ vim.api.nvim_create_augroup('IDEifyBufferBar', { clear = true })
 vim.api.nvim_create_autocmd('BufEnter', {
 	group = 'IDEifyBufferBar',
 	callback = function(args)
+		if not g_state.active then return end
 		local state = require('nvim-ideify.bufferbar.state')
 		local ui = require('nvim-ideify.bufferbar.ui')
 		local win = state.get_window()
@@ -96,6 +109,7 @@ vim.api.nvim_create_autocmd('BufEnter', {
 vim.api.nvim_create_autocmd('BufModifiedSet', {
 	group = 'IDEifyBufferBar',
 	callback = function()
+		if not g_state.active then return end
 		local ui = require('nvim-ideify.bufferbar.ui')
 		vim.schedule(ui.render)
 	end

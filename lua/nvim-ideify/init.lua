@@ -73,9 +73,7 @@ vim.api.nvim_create_autocmd('WinEnter', {
 	group = 'IDEify',
 	callback = function(args)
 		local utils = require('nvim-ideify.utils')
-
 		local win = vim.api.nvim_get_current_win()
-
 		local buf = args.buf
 		local buf_type = vim.bo[buf].buftype
 		local check_id = not constants.ui2_buffers[buf]
@@ -91,7 +89,9 @@ vim.api.nvim_create_autocmd('WinEnter', {
 vim.api.nvim_create_autocmd('TextChanged', {
 	group = 'IDEify',
 	callback = function(args)
-		if vim.bo[args.buf].filetype ~= 'netrw' then return end
+		if vim.bo[args.buf].filetype ~= 'netrw' or not state.active then
+			return
+		end
 		local utils = require('nvim-ideify.utils')
 		local win = vim.api.nvim_get_current_win()
 		if utils.is_plugin_win(win) then
@@ -104,6 +104,7 @@ vim.api.nvim_create_autocmd('TextChanged', {
 vim.api.nvim_create_autocmd('WinResized', {
 	group = 'IDEify',
 	callback = function(args)
+		if not state.active then return end
 		local utils = require('nvim-ideify.utils')
 		local win = tonumber(args.match) or constants.NOID
 		if utils.is_plugin_win(win) then

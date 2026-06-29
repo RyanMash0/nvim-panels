@@ -8,16 +8,17 @@ local state = require('nvim-ideify.filetree.state')
 ---
 function M.go_to_dir()
 	local ui = require('nvim-ideify.filetree.ui')
+	local fs_type = g_constants.fs_type
 	vim.ui.input({
 		prompt = "Path: ",
-		completion = g_constants.fs_type.FILE,
+		completion = fs_type.FILE,
 	}, function(input)
 		if not input then return end
 		local path = vim.fs.normalize(input)
 		path = vim.fs.abspath(input)
 		local stat, err = vim.uv.fs_stat(path)
 
-		if err or not stat then
+		if err or not stat or stat.type ~= fs_type.DIRECTORY then
 			vim.notify('Invalid Directory', vim.log.levels.ERROR)
 			return
 		end
