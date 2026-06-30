@@ -15,7 +15,7 @@ function M.go_to_dir()
 	}, function(input)
 		if not input then return end
 		local path = vim.fs.normalize(input)
-		path = vim.fs.abspath(input)
+		path = vim.fs.abspath(path)
 		local stat, err = vim.uv.fs_stat(path)
 
 		if err or not stat or stat.type ~= fs_type.DIRECTORY then

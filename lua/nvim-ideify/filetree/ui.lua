@@ -93,12 +93,35 @@ local function get_entries(start_line)
 	return entries + extra
 end
 
+--- Replaces `count` lines in the file tree buffer with `text`, beginning at
+--- the `start` line.
 ---
-local function print_paths()
+--- Indexing is 1-based to match with the table in state. Since the
+--- `vim.api.nvim_buf_set_lines` function is used to accomplish this,
+--- nonpositive indices are interpreted as <end_of_buffer> + index.
+---
+--- If `start` is not provided, it will default to the first line of the
+--- buffer, which is 1.
+---
+--- If `count` is not provided, then every line from `start` to the end of the
+--- buffer will be replaced.
+---
+--- If `count` is zero, then `text` will be inserted before the `start` line.
+---
+---@param text string[] Array of lines to use as replacement
+---@param start? integer First line index, defaults to 1
+---@param count? integer Number of lines to replace
+local function set_buffer_text(text, start, count)
 	local buf_id = state.get_buffer()
 	local cur_line = get_cur_line()
+	local first = 0
+	local last = -1
+
+	if start then first = start - 1 end
+	if count then last = first + count end
+
 	vim.bo[buf_id].modifiable = true
-	vim.api.nvim_buf_set_lines(buf_id, 0, -1, true, state.get_text())
+	vim.api.nvim_buf_set_lines(buf_id, first, last, true, text)
 	vim.bo[buf_id].modifiable = false
 	set_cur_line(cur_line)
 end
@@ -111,8 +134,12 @@ local function expand(line)
 	local name = state.get_text_by_line(line)
 	name = name:gsub('>', 'v', 1)
 	state.set_text_by_line(name, line)
-	get_entries(line)
-	print_paths()
+	local num = get_entries(line)
+	local text = {}
+	for i = 0, num do
+		table.insert(text, state.get_text_by_line(line + i))
+	end
+	set_buffer_text(text, line, 1)
 end
 
 ---
@@ -127,6 +154,7 @@ local function close(line)
 
 	local path
 	local cur_entry = state.get_entry_by_line(line + 1)
+	local count = 1
 	while ((cur_entry and cur_entry.depth) or constants.BASE_DEPTH) > parent.depth do
 		path = cur_entry.path
 		state.remove_source(path)
@@ -135,9 +163,10 @@ local function close(line)
 		end
 		state.remove_tree_entry(line + 1)
 		cur_entry = state.get_entry_by_line(line + 1)
+		count = count + 1
 	end
 
-	print_paths()
+	set_buffer_text({ state.get_text_by_line(line) }, line, count)
 end
 
 ---
@@ -293,7 +322,7 @@ function M.render()
 	state.insert_tree_entry(parent_dir_entry, '../')
 
 	get_entries(header_height + 1)
-	print_paths()
+	set_buffer_text(state.get_text())
 
 	M.highlight()
 end

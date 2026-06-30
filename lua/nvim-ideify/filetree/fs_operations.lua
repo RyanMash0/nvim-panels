@@ -179,7 +179,7 @@ function M.move()
 
 		vim.schedule(function()
 			print_errors(err_log)
-			print_successes(path_log, 'moved', true, true)
+			print_successes(path_log, 'moved', true, false)
 
 			state.clear_marked()
 			ui.render()

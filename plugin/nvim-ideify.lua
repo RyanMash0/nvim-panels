@@ -8,7 +8,7 @@ local constants = require('nvim-ideify.constants')
 --- Get completion for the constants.position enum on every argument
 ---
 ---@param arg_lead string (string) Leading part of current argument
----@return string[] : List of completion candidates
+---@return string[] # List of completion candidates
 local function position_complete(arg_lead)
 	return vim.tbl_filter(function(item)
 		return vim.startswith(item, arg_lead)
@@ -19,8 +19,8 @@ end
 ---
 ---@param arg_lead string (string) Leading part of current argument
 ---@param cmd_line string (string) Entire command line
----@return string[] : List of completion candidates
-local function position_single_complete(arg_lead, cmd_line, _)
+---@return string[] # List of completion candidates
+local function position_complete_single(arg_lead, cmd_line, _)
 	local _, num = cmd_line:gsub(' ', ' ')
 	if num < 2 then
 		return position_complete(arg_lead)
@@ -89,7 +89,7 @@ vim.api.nvim_create_user_command(
 
 		require('nvim-ideify').panel_swap(args.fargs[1], args.fargs[2])
 	end,
-	{ nargs = '+', complete = position_complete}
+	{ nargs = '+', complete = position_complete }
 )
 
 vim.api.nvim_create_user_command(
@@ -110,7 +110,7 @@ vim.api.nvim_create_user_command(
 
 		require('nvim-ideify').panel_resize(direction, size)
 	end,
-	{ nargs = '+', complete = position_single_complete }
+	{ nargs = '+', complete = position_complete_single }
 )
 
 vim.api.nvim_create_user_command(
