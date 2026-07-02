@@ -53,7 +53,7 @@ vim.api.nvim_create_user_command(
 )
 
 vim.api.nvim_create_user_command(
-	'PanelsToggle',
+	'PanelsToggleAll',
 	require('nvim-panels').toggle,
 	{ nargs = 0 }
 )
@@ -114,13 +114,13 @@ vim.api.nvim_create_user_command(
 )
 
 vim.api.nvim_create_user_command(
-	'PanelsBufferBarNext',
+	'PanelsBufNext',
 	require('nvim-panels').bufferbar_next,
 	{ nargs = 0 }
 )
 
 vim.api.nvim_create_user_command(
-	'PanelsBufferBarPrevious',
+	'PanelsBufPrev',
 	require('nvim-panels').bufferbar_previous,
 	{ nargs = 0 }
 )
