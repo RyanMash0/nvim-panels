@@ -1,6 +1,7 @@
 -------------------------------------------------------------------------------
 -- Bugs                                                                      --
 -------------------------------------------------------------------------------
+- Blank buffer name is ././
 
 -------------------------------------------------------------------------------
 -- Features                                                                  --
@@ -8,6 +9,7 @@
 ? Render debounce
 ? Investigate semi-global table
 ? Add sorting support for file tree
+- Move cursor with target and cwd line changes
 - Add support for links in file tree
 - Add state saving on exit
 - Add home screen on blank buffer and only allow single buffer instance when

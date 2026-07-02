@@ -7,11 +7,13 @@ M.defaults = {
 		number = false,
 		winfixbuf = true,
 		statusline = '[Files]',
+		winhighlight = 'CursorLine:IDEifyTreeCursorLine',
 	},
 	buffer = {
 		modifiable = false,
 		buflisted = false,
 	},
+	do_cursorline = true,
 	show_keymaps = true,
 	header = function() return nil end,
 	keymaps_info = {
@@ -69,23 +71,36 @@ function M.setup(opts)
 end
 
 function M.add_highlights()
-	local target_hl_pre = vim.api.nvim_get_hl(0, { name = 'Green' })
-	local source_hl_pre = vim.api.nvim_get_hl(0, { name = 'Grey' })
-	local target_hl = {}
-	local source_hl = {}
-	for key, val in pairs(target_hl_pre) do
-		target_hl[key] = val
+	local target_pre = vim.api.nvim_get_hl(
+		0, { name = 'Directory', link = false }
+	)
+	local target = {}
+	for key, val in pairs(target_pre) do
+		target[key] = val
 	end
-	for key, val in pairs(source_hl_pre) do
-		source_hl[key] = val
-	end
-	target_hl.reverse = true
-	source_hl.reverse = true
-	target_hl.bold = true
-	source_hl.bold = true
+	target.bold = true
+	target.reverse = true
 
-	vim.api.nvim_set_hl(0, 'IDEifyTreeTarget', target_hl)
-	vim.api.nvim_set_hl(0, 'IDEifyTreeSource', source_hl)
+	local source_pre = vim.api.nvim_get_hl(
+		0, { name = 'netrwComment', link = false }
+	)
+	local source = {}
+	for key, val in pairs(source_pre) do
+		source[key] = val
+	end
+	source.bold = true
+	source.reverse = true
+
+	vim.api.nvim_set_hl(0, 'IDEifyTreeDir', { link = 'Directory' })
+	vim.api.nvim_set_hl(0, 'IDEifyTreeBar', { link = 'Special' })
+	vim.api.nvim_set_hl(0, 'IDEifyTreePlain', { link = 'netrwPlain' })
+	vim.api.nvim_set_hl(0, 'IDEifyTreeHeader', { link = 'netrwComment' })
+	vim.api.nvim_set_hl(0, 'IDEifyTreeTarget', target)
+	vim.api.nvim_set_hl(0, 'IDEifyTreeSource', source)
+	vim.api.nvim_set_hl(0, 'IDEifyTreeCursorLine', { link = 'CursorLine' })
+	vim.api.nvim_set_hl(
+		0, 'IDEifyTreeNoCursor', { blend = 100, nocombine = true }
+	)
 end
 
 return M

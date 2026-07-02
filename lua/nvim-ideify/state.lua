@@ -13,6 +13,7 @@ M.wins = {
 M.editor_wins = {}
 M.height_ratio = 1
 M.width_ratio = 1
+M.guicursor = vim.o.guicursor
 
 
 return M

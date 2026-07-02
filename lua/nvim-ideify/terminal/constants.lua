@@ -17,10 +17,10 @@ M.MAX_BUFFERS = 10
 
 ---@type nvim-ideify.terminal.statusline
 M.statusline = {
-	sep = ' %#Statusline#|',
+	sep = ' %*|',
 	hl = {
-		selected = '%#TabLineSel# ',
-		normal = '%#StatusLine# ',
+		selected = '%#IDEifyTerminalCurrent# ',
+		normal = '%* ',
 	},
 }
 

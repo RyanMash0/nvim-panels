@@ -48,6 +48,7 @@
 ---@class nvim-ideify.filetree.config.options: nvim-ideify.module.config.options
 ---@field window nvim-ideify.win_opts
 ---@field buffer nvim-ideify.buf_opts
+---@field do_cursorline boolean
 ---@field show_keymaps boolean
 ---@field header fun(): string[]?
 ---@field keymaps_info string[]

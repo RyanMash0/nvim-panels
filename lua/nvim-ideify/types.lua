@@ -142,3 +142,4 @@
 ---@field editor_wins nvim-ideify.editor_win[][]
 ---@field width_ratio number
 ---@field height_ratio number
+---@field guicursor string

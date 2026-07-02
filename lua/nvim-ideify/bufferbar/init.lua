@@ -132,8 +132,9 @@ vim.api.nvim_create_autocmd('BufDelete', {
 vim.api.nvim_create_autocmd('ColorScheme', {
 	group = 'IDEifyBufferBar',
 	callback = function()
+		local g_utils = require('nvim-ideify.utils')
 		local config = require('nvim-ideify.bufferbar.config')
-		config.add_highlights()
+		g_utils.get_term_bg(config.add_highlights)
 	end
 })
 

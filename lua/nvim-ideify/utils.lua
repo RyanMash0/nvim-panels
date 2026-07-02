@@ -5,6 +5,39 @@ local constants = require('nvim-ideify.constants')
 local state = require('nvim-ideify.state')
 
 ---
+---@param callback fun(bg: integer)
+function M.get_term_bg(callback)
+	local autocmd
+	local co = coroutine.create(function()
+		io.write('\027]11;?\027\\')
+
+		local bg_str = coroutine.yield()
+		local r, g, b = bg_str:match('(%w%w)%w*/(%w%w)%w*/(%w%w)%w*$')
+
+		if not r or not g or not b then
+			vim.api.nvim_del_autocmd(autocmd)
+			return callback(0)
+		end
+
+		bg_str = r .. g .. b
+
+		vim.api.nvim_del_autocmd(autocmd)
+		return callback(tonumber(bg_str, 16))
+	end)
+
+	autocmd = vim.api.nvim_create_autocmd('TermResponse', {
+		callback = function(args)
+			local bg_str = args.data.sequence
+			if bg_str:match('rgb') then
+				coroutine.resume(co, bg_str)
+			end
+		end
+	})
+
+	coroutine.resume(co)
+end
+
+---
 ---@param pos nvim-ideify.position
 ---@return nvim-ideify.split | nil
 function M.position_to_split(pos)

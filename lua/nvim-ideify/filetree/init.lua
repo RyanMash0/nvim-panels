@@ -25,8 +25,30 @@ vim.api.nvim_create_augroup('IDEifyFileTree', { clear = true })
 vim.api.nvim_create_autocmd('ColorScheme', {
 	group = 'IDEifyFileTree',
 	callback = function()
-		local config = M.get_config()
+		local config = require('nvim-ideify.filetree.config')
 		config.add_highlights()
+	end
+})
+
+vim.api.nvim_create_autocmd('WinEnter', {
+	group = 'IDEifyFileTree',
+	callback = function()
+		local g_state = require('nvim-ideify.state')
+		local state = require('nvim-ideify.filetree.state')
+		local config = require('nvim-ideify.filetree.config')
+		if not config.options.do_cursorline then return end
+
+		local cur_win = vim.api.nvim_get_current_win()
+		local win = state.get_window()
+
+		if cur_win == state.get_window() then
+			g_state.guicursor = vim.o.guicursor
+			vim.wo[win].cursorline = true
+			vim.o.guicursor = 'a:IDEifyTreeNoCursor'
+		else
+			vim.o.guicursor = g_state.guicursor
+			vim.wo[win].cursorline = false
+		end
 	end
 })
 

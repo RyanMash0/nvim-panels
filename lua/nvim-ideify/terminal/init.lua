@@ -21,4 +21,14 @@ function M.get_ui()
 	return (require('nvim-ideify.terminal.ui'))
 end
 
+vim.api.nvim_create_augroup('IDEifyTerminal', { clear = true })
+vim.api.nvim_create_autocmd('ColorScheme', {
+	group = 'IDEifyTerminal',
+	callback = function()
+		local g_utils = require('nvim-ideify.utils')
+		local config = require('nvim-ideify.terminal.config')
+		g_utils.get_term_bg(config.add_highlights)
+	end
+})
+
 return M

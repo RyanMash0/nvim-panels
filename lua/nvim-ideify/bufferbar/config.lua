@@ -75,33 +75,50 @@ function M.setup(opts)
 	}
 end
 
-function M.add_highlights()
-	local yank_hl_pre = vim.api.nvim_get_hl(0, { name = 'Green' })
-	local yank_hl = {}
-	for key, val in pairs(yank_hl_pre) do
-		yank_hl[key] = val
-	end
-	yank_hl.reverse = true
+function M.add_highlights(bg)
+	local normal = vim.api.nvim_get_hl(
+		0, { name = 'Normal', link = false }
+	)
+	local current_pre = vim.api.nvim_get_hl(
+		0, { name = 'PmenuSel', link = false }
+	)
+	local current = {}
+	current.fg = normal.bg or bg
+	current.ctermfg = normal.ctermbg or bg
+	current.bg = current_pre.bg or normal.fg
+	current.ctermbg = current_pre.ctermbg or normal.ctermfg
 
-	local close_hl_pre = vim.api.nvim_get_hl(0, { name = 'Red' })
-	local close_hl = {}
-	for key, val in pairs(close_hl_pre) do
-		close_hl[key] = val
+	local yank_pre = vim.api.nvim_get_hl(
+		0, { name = 'DiagnosticOk', link = false }
+	)
+	local yank = {}
+	for key, val in pairs(yank_pre) do
+		yank[key] = val
 	end
-	-- close_hl.reverse = true
-	close_hl.dim = true
+	yank.reverse = true
 
-	local modified_hl_pre = vim.api.nvim_get_hl(0, { name = 'Blue' })
-	local modified_hl = {}
-	for key, val in pairs(modified_hl_pre) do
-		modified_hl[key] = val
+	local close_pre = vim.api.nvim_get_hl(
+		0, { name = 'DiagnosticError', link = false }
+	)
+	local close = {}
+	for key, val in pairs(close_pre) do
+		close[key] = val
 	end
-	-- modified_hl.reverse = true
-	modified_hl.dim = true
+	close.dim = true
 
-	vim.api.nvim_set_hl(0, 'IDEifyBufferBarYank', yank_hl)
-	vim.api.nvim_set_hl(0, 'IDEifyBufferBarClose', close_hl)
-	vim.api.nvim_set_hl(0, 'IDEifyBufferBarModified', modified_hl)
+	local modified_pre = vim.api.nvim_get_hl(
+		0, { name = 'DiagnosticInfo', link = false }
+	)
+	local modified = {}
+	for key, val in pairs(modified_pre) do
+		modified[key] = val
+	end
+	modified.dim = true
+
+	vim.api.nvim_set_hl(0, 'IDEifyBufferBarCurrent', current)
+	vim.api.nvim_set_hl(0, 'IDEifyBufferBarYank', yank)
+	vim.api.nvim_set_hl(0, 'IDEifyBufferBarClose', close)
+	vim.api.nvim_set_hl(0, 'IDEifyBufferBarModified', modified)
 end
 
 return M

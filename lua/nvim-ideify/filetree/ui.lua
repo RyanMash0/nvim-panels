@@ -13,8 +13,17 @@ M.get_cwd_array = utils.get_cwd_array
 M.get_target_array = utils.get_target_array
 M.get_path_array = utils.get_path_array
 
+--- Gets the 1-indexed cursor row in the file tree window starting on the first
+--- line below the header (../).
 ---
----@return integer
+--- Indexing starts below the bottom of the header for two reasons:
+--- 1. There is nothing to interact with in the header
+--- 2. It simplifies the calculation of the cursor position when the keymaps
+--- help menu is toggled
+---
+--- If the cursor is above the bottom of the header, then 1 is returned.
+---
+---@return integer # Cursor line index
 local function get_cur_line()
 	local win_id = state.get_window()
 	local pos = vim.api.nvim_win_get_cursor(win_id)
@@ -22,14 +31,25 @@ local function get_cur_line()
 	return math.max(pos[1], 1)
 end
 
+--- Sets the 1-indexed cursor row in the file tree window starting on the first
+--- line below the header (../).
 ---
----@param line integer
+--- Indexing starts below the bottom of the header for two reasons:
+--- 1. There is nothing to interact with in the header
+--- 2. It simplifies the calculation of the cursor position when the keymaps
+--- help menu is toggled
+---
+--- Negative values are valid, and the line index will not overflow in either
+--- direction.
+---
+---@param line integer Cursor line index
 local function set_cur_line(line)
 	local buf_id = state.get_buffer()
 	local win_id = state.get_window()
 	local max_row = vim.api.nvim_buf_line_count(buf_id)
 	line = line + (state.get_header_height() or 0)
 	line = line <= max_row and line or max_row
+	line = math.max(line, 1)
 	vim.api.nvim_win_set_cursor(win_id, { line, 0 })
 end
 
@@ -255,10 +275,10 @@ function M.highlight()
 	local buf_id = state.get_buffer()
 	local ns_id = constants.namespace
 	vim.api.nvim_buf_clear_namespace(buf_id, ns_id, 0, -1)
-	local dir_hl = vim.api.nvim_get_hl_id_by_name('netrwDir')
-	local bar_hl = vim.api.nvim_get_hl_id_by_name('Special')
-	local plain_hl = vim.api.nvim_get_hl_id_by_name('netrwPlain')
-	local header_hl = vim.api.nvim_get_hl_id_by_name('netrwComment')
+	local dir_hl = vim.api.nvim_get_hl_id_by_name('IDEifyTreeDir')
+	local bar_hl = vim.api.nvim_get_hl_id_by_name('IDEifyTreeBar')
+	local plain_hl = vim.api.nvim_get_hl_id_by_name('IDEifyTreePlain')
+	local header_hl = vim.api.nvim_get_hl_id_by_name('IDEifyTreeHeader')
 	local target_hl = vim.api.nvim_get_hl_id_by_name('IDEifyTreeTarget')
 	local source_hl = vim.api.nvim_get_hl_id_by_name('IDEifyTreeSource')
 
