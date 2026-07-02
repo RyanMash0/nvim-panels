@@ -34,6 +34,7 @@ vim.api.nvim_create_autocmd('WinEnter', {
 	group = 'PanelsFileTree',
 	callback = function()
 		local g_state = require('nvim-panels.state')
+		local g_utils = require('nvim-panels.utils')
 		local state = require('nvim-panels.filetree.state')
 		local config = require('nvim-panels.filetree.config')
 		if not config.options.do_cursorline then return end
@@ -41,12 +42,15 @@ vim.api.nvim_create_autocmd('WinEnter', {
 		local cur_win = vim.api.nvim_get_current_win()
 		local win = state.get_window()
 
-		if cur_win == state.get_window() then
+		if cur_win == win then
 			g_state.guicursor = vim.o.guicursor
-			vim.wo[win].cursorline = true
 			vim.o.guicursor = 'a:PanelsTreeNoCursor'
-		else
-			vim.o.guicursor = g_state.guicursor
+			vim.wo[win].cursorline = true
+			return
+		end
+
+		vim.o.guicursor = g_state.guicursor
+		if g_utils.win_valid(win) then
 			vim.wo[win].cursorline = false
 		end
 	end
