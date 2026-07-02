@@ -10,7 +10,6 @@
 ? Render debounce
 ? Investigate semi-global table
 ? Add sorting support for file tree
-- Rename plugin to nvim-panels
 - Add support for links in file tree
 - Add state saving on exit
 - Add documentation to functions
