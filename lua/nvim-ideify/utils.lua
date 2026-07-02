@@ -354,7 +354,7 @@ local function check_or_make_main_buf()
 	---@type table<nvim-ideify.buf_id, integer>
 	local check_bufs = {}
 	for i, buf in ipairs(bufs) do
-		check_bufs[buf] = i
+		if vim.bo[buf].buflisted then check_bufs[buf] = i end
 	end
 
 	local mod_bufs = M.get_position_to_buf()

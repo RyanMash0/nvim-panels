@@ -5,14 +5,14 @@
 -------------------------------------------------------------------------------
 -- Features                                                                  --
 -------------------------------------------------------------------------------
+? Add home screen on blank buffer and only allow single buffer instance when
+  all buffers deleted by making single "eternal" buffer
 ? Render debounce
 ? Investigate semi-global table
 ? Add sorting support for file tree
 - Move cursor with target and cwd line changes
 - Add support for links in file tree
 - Add state saving on exit
-- Add home screen on blank buffer and only allow single buffer instance when
-  all buffers deleted by making single "eternal" buffer
 - Add documentation to functions
 - Add documentation files
 - Add health
