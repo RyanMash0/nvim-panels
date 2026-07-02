@@ -107,7 +107,7 @@ vim.api.nvim_create_autocmd({'BufAdd', 'BufNew'}, {
 	callback = function(args)
 		local state = require('nvim-ideify.bufferbar.state')
 		local buf = args.buf
-		if not state.get_entry_by_buf(buf) and vim.bo[buf].buflisted then
+		if vim.bo[buf].buflisted then
 			state.register_new_buf(buf)
 		end
 	end,

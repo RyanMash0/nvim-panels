@@ -202,12 +202,17 @@ function M.render()
 	for i, buf in state.buf_iterator() do
 		buf_name = vim.api.nvim_buf_get_name(buf)
 
-		dir_name = vim.fs.dirname(buf_name)
-		dir_name = get_rel_dirname(dir_name)
-		dir_name = truncate_middle(dir_name, pref_len)
+		if buf_name == '' then
+			dir_name = ''
+			file_name = '[No Name]'
+		else
+			dir_name = vim.fs.dirname(buf_name)
+			dir_name = get_rel_dirname(dir_name)
+			dir_name = truncate_middle(dir_name, pref_len)
+			file_name = vim.fs.basename(buf_name)
+		end
 
 		truncate_len = math.max(pref_len, #dir_name)
-		file_name = vim.fs.basename(buf_name)
 
 		if minimal then
 			dir_name = file_name:match('^%.*[^%.]*') or ''

@@ -84,6 +84,7 @@ end
 ---
 ---@param buf nvim-ideify.buf_id
 function M.register_new_buf(buf)
+	if buf_to_entry[buf] then return end
 	table.insert(pos_to_buf, buf)
 	buf_to_entry[buf] = { position = M.get_num_bufs() }
 end
@@ -91,12 +92,14 @@ end
 ---
 ---@param pos integer
 function M.remove_buffer(pos)
+	local buf = pos_to_buf[pos]
 	table.remove(pos_to_buf, pos)
+	buf_to_entry[buf] = nil
 end
 
 ---
----@param buf nvim-ideify.buf_id
----@param pos integer
+---@param buf? nvim-ideify.buf_id
+---@param pos? integer
 function M.insert_buffer(buf, pos)
 	if not buf then return end
 
