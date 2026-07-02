@@ -114,14 +114,11 @@ local function get_entries(start_line)
 end
 
 --- Replaces `count` lines in the file tree buffer with `text`, beginning at
---- the `start` line.
+--- the `start` line, placing the cursor on `line`.
 ---
 --- Indexing is 1-based to match with the table in state. Since the
 --- `vim.api.nvim_buf_set_lines` function is used to accomplish this,
 --- nonpositive indices are interpreted as <end_of_buffer> + index.
----
---- If `start` is not provided, it will default to the first line of the
---- buffer, which is 1.
 ---
 --- If `count` is not provided, then every line from `start` to the end of the
 --- buffer will be replaced.
@@ -129,11 +126,12 @@ end
 --- If `count` is zero, then `text` will be inserted before the `start` line.
 ---
 ---@param text string[] Array of lines to use as replacement
+---@param line? integer Cursor line, defaults to current line
 ---@param start? integer First line index, defaults to 1
 ---@param count? integer Number of lines to replace
-local function set_buffer_text(text, start, count)
+local function set_buffer_text(text, line, start, count)
 	local buf_id = state.get_buffer()
-	local cur_line = get_cur_line()
+	if not line then line = get_cur_line() end
 	local first = 0
 	local last = -1
 
@@ -143,7 +141,7 @@ local function set_buffer_text(text, start, count)
 	vim.bo[buf_id].modifiable = true
 	vim.api.nvim_buf_set_lines(buf_id, first, last, true, text)
 	vim.bo[buf_id].modifiable = false
-	set_cur_line(cur_line)
+	set_cur_line(line)
 end
 
 ---
@@ -159,7 +157,7 @@ local function expand(line)
 	for i = 0, num do
 		table.insert(text, state.get_text_by_line(line + i))
 	end
-	set_buffer_text(text, line, 1)
+	set_buffer_text(text, nil, line, 1)
 end
 
 ---
@@ -186,7 +184,7 @@ local function close(line)
 		count = count + 1
 	end
 
-	set_buffer_text({ state.get_text_by_line(line) }, line, count)
+	set_buffer_text({ state.get_text_by_line(line) }, nil, line, count)
 end
 
 ---
@@ -330,8 +328,8 @@ function M.render()
 		path = path,
 		type = fs_type.DIRECTORY,
 	}
+	local line = get_cur_line()
 	local header = utils.get_full_header()
-
 	local header_height = state.get_header_height()
 
 	state.clear_entries()
@@ -342,7 +340,7 @@ function M.render()
 	state.insert_tree_entry(parent_dir_entry, '../')
 
 	get_entries(header_height + 1)
-	set_buffer_text(state.get_text())
+	set_buffer_text(state.get_text(), line)
 
 	M.highlight()
 end
