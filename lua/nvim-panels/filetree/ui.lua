@@ -197,6 +197,7 @@ function M.change_dir(path)
 				vim.cmd.lcd({ args = { path }, mods = { silent = true }})
 			end)
 		end
+		set_cur_line(1)
 		M.render()
 		vim.api.nvim_set_current_win(state.get_window())
 		require('nvim-panels.bufferbar').get_ui().render()

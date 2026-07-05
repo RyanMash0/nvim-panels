@@ -43,9 +43,17 @@ function M.get_term_bg(callback)
 	coroutine.resume(co)
 
 	timer:start(1000, 0, function()
-		vim.api.nvim_del_autocmd(autocmd)
-		coroutine.close(co)
-		callback(0)
+		vim.schedule(function()
+			local autocmds = vim.api.nvim_get_autocmds({ id = autocmd })
+			if next(autocmds) then
+				vim.api.nvim_del_autocmd(autocmd)
+			end
+
+			if coroutine.status(co) ~= 'dead' then
+				coroutine.close(co)
+				callback(0)
+			end
+		end)
 	end)
 end
 
