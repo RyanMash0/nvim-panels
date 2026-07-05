@@ -3,6 +3,7 @@ local M = {}
 local g_constants = require('nvim-panels.constants')
 
 local config = require('nvim-panels.filetree.config')
+local constants = require('nvim-panels.filetree.constants')
 local state = require('nvim-panels.filetree.state')
 
 ---
@@ -56,6 +57,11 @@ function M.get_path_array(text, path, incl_base)
 	--local spaces = string.rep(' ', #text)
 
 	local path_item_array = {}
+
+	if not incl_base then
+		table.insert(path_item_array, vim.fs.basename(path) .. '/')
+	end
+
 	for parent in vim.fs.parents(path) do
 		parent = vim.fs.basename(parent) .. '/'
 		if parent == './' and not incl_base then break end
@@ -174,6 +180,7 @@ end
 function M.mark_source()
 	local ui = require('nvim-panels.filetree.ui')
 	local path, _ = M.get_current_entry()
+	if path == constants.NO_PATH then return end
 
 	state.mark_source(path)
 	vim.schedule(ui.render)

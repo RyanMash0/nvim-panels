@@ -34,7 +34,19 @@ function M.get_term_bg(callback)
 		end
 	})
 
+	local timer = vim.uv.new_timer()
+	if not timer then
+		vim.api.nvim_del_autocmd(autocmd)
+		return
+	end
+
 	coroutine.resume(co)
+
+	timer:start(1000, 0, function()
+		vim.api.nvim_del_autocmd(autocmd)
+		coroutine.close(co)
+		callback(0)
+	end)
 end
 
 ---
@@ -208,6 +220,26 @@ function M.set_last_win_buf(buf)
 end
 
 ---
+---@param id nvim-panels.buf_id
+---@return boolean
+function M.check_buf_type(id)
+	local buf_type = vim.bo[id].buftype
+	if constants.fail_buftype[buf_type] then return false end
+
+	return true
+end
+
+---
+---@param id nvim-panels.buf_id
+---@return boolean
+function M.check_ui2_buf(id)
+	local buf_name = vim.api.nvim_buf_get_name(id)
+	if constants.ui2_buffers[buf_name] then return true end
+
+	return false
+end
+
+---
 ---@param id any
 ---@return boolean
 function M.buf_valid(id)
@@ -353,17 +385,19 @@ local function check_or_make_main_buf()
 	local bufs = vim.api.nvim_list_bufs()
 	---@type table<nvim-panels.buf_id, integer>
 	local check_bufs = {}
+	local check_type
+	local check_ui2
 	for i, buf in ipairs(bufs) do
-		if vim.bo[buf].buflisted then check_bufs[buf] = i end
+		check_type = M.check_buf_type(buf)
+		check_ui2 = not M.check_ui2_buf(buf)
+		if vim.bo[buf].buflisted and check_type and check_ui2 then
+			check_bufs[buf] = i
+		end
 	end
 
 	local mod_bufs = M.get_position_to_buf()
 	for _, id in pairs(mod_bufs) do
 			check_bufs[id] = nil
-	end
-
-	for id, _ in pairs(constants.ui2_buffers) do
-		check_bufs[id] = nil
 	end
 
 	local next_buf = next(check_bufs)
@@ -423,13 +457,12 @@ function M.check_or_make_main_win()
 		win_buf = vim.api.nvim_win_get_buf(win)
 		if not win_config.focusable or win_config.relative ~= '' then
 			check_wins[win] = nil
-		elseif constants.ui2_buffers[win_buf] then
+		elseif not M.check_buf_type(win_buf) or M.check_ui2_buf(win_buf) then
 			check_wins[win] = nil
 		end
 	end
 
 	local min = next(check_wins)
-
 	if min == nil then
 		local buf_id = check_or_make_main_buf()
 		local win_conf = get_split_conf()

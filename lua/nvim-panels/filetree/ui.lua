@@ -320,7 +320,7 @@ function M.render()
 	local path = vim.uv.cwd() or vim.fn.getcwd()
 	local header_entry = {
 		depth = constants.BASE_DEPTH,
-		path = path,
+		path = constants.NO_PATH,
 		type = fs_type.HEADER,
 	}
 	local parent_dir_entry = {

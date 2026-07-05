@@ -52,12 +52,22 @@ M.winlayout_type = {
 	LEAF = 'leaf',
 }
 
----@type table<nvim-panels.buf_id, boolean>
+---@type table<string, true>
+M.fail_buftype = {
+	['terminal'] = true,
+	['help'] = true,
+	['quickfix'] = true,
+	['nofile'] = true,
+	['prompt'] = true,
+}
+
+---@type table<string, true>
 M.ui2_buffers = {
-	[2] = true,
-	[3] = true,
-	[4] = true,
-	[5] = true,
+	['[Cmd]'] = true,
+	['[Dialog]'] = true,
+	['[Msg]'] = true,
+	['[Pager]'] = true,
+	['[Scratch]'] = true,
 }
 
 ---@type nvim-panels.invalid_id

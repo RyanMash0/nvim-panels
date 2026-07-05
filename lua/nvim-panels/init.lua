@@ -75,11 +75,8 @@ vim.api.nvim_create_autocmd('WinEnter', {
 		local utils = require('nvim-panels.utils')
 		local win = vim.api.nvim_get_current_win()
 		local buf = args.buf
-		local buf_type = vim.bo[buf].buftype
 		local check_id = not constants.ui2_buffers[buf]
-		local check_type = buf_type ~= 'terminal' and
-			buf_type ~= 'help' and buf_type ~= 'quickfix' and
-			buf_type ~= 'nofile' and buf_type ~= 'prompt'
+		local check_type = utils.check_buf_type(buf)
 		if not utils.is_plugin_win(win) and check_id and check_type then
 			state.wins.last = win
 		end

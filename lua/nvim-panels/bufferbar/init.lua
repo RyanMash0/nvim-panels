@@ -105,11 +105,15 @@ vim.api.nvim_create_autocmd('BufModifiedSet', {
 vim.api.nvim_create_autocmd({'BufAdd', 'BufNew'}, {
 	group = 'PanelsBufferBar',
 	callback = function(args)
+		local g_utils = require('nvim-panels.utils')
 		local state = require('nvim-panels.bufferbar.state')
 		local buf = args.buf
-		if vim.bo[buf].buflisted then
-			state.register_new_buf(buf)
-		end
+		vim.schedule(function()
+			local check_type = g_utils.check_buf_type(buf)
+			if vim.bo[buf].buflisted and check_type then
+				state.register_new_buf(buf)
+			end
+		end)
 	end,
 })
 

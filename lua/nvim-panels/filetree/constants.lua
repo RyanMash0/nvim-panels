@@ -22,4 +22,7 @@ M.confirm = {
 ---@type -1
 M.BASE_DEPTH = -1
 
+---@type 'NONE'
+M.NO_PATH = 'NONE'
+
 return M

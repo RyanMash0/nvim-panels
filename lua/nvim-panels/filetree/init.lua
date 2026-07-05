@@ -44,7 +44,7 @@ vim.api.nvim_create_autocmd('WinEnter', {
 
 		if cur_win == win then
 			g_state.guicursor = vim.o.guicursor
-			vim.o.guicursor = 'a:PanelsTreeNoCursor'
+			vim.o.guicursor = 'n-v-ve-o-i-r-sm-t:PanelsTreeNoCursor'
 			vim.wo[win].cursorline = true
 			return
 		end

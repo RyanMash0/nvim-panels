@@ -10,8 +10,10 @@
 ? Render debounce
 ? Investigate semi-global table
 ? Add sorting support for file tree
+? File tree moves cursor to top on change dir
+- Hide list for file tree
 - Add support for links in file tree
-- Add state saving on exit
+- Add state saving on exit (SessionWritePre, SessionLoadPost)
 - Add documentation to functions
 - Add documentation files
 - Add health
