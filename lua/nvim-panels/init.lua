@@ -113,4 +113,11 @@ vim.api.nvim_create_autocmd('WinResized', {
 	end
 })
 
+vim.api.nvim_create_autocmd('SessionWritePre', {
+	group = 'Panels',
+	callback = function()
+		ui.close()
+	end,
+})
+
 return M

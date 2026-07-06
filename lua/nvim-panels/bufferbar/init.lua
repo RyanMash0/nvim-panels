@@ -90,16 +90,17 @@ vim.api.nvim_create_autocmd('BufEnter', {
 		if not g_state.active then return end
 		local ui = require('nvim-panels.bufferbar.ui')
 		vim.schedule(ui.render)
-	end
+	end,
 })
 
-vim.api.nvim_create_autocmd('BufModifiedSet', {
+vim.api.nvim_create_autocmd('OptionSet', {
 	group = 'PanelsBufferBar',
+	pattern = 'modified',
 	callback = function()
 		if not g_state.active then return end
 		local ui = require('nvim-panels.bufferbar.ui')
 		vim.schedule(ui.render)
-	end
+	end,
 })
 
 vim.api.nvim_create_autocmd({'BufAdd', 'BufNew'}, {
@@ -139,7 +140,7 @@ vim.api.nvim_create_autocmd('ColorScheme', {
 		local g_utils = require('nvim-panels.utils')
 		local config = require('nvim-panels.bufferbar.config')
 		g_utils.get_term_bg(config.add_highlights)
-	end
+	end,
 })
 
 return M

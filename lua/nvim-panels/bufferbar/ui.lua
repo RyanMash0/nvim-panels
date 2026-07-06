@@ -175,6 +175,7 @@ function M.render()
 	end
 
 	local buf_name
+	local stat
 	local file_name
 	local dir_name
 	local dir_table = {}
@@ -201,10 +202,14 @@ function M.render()
 
 	for i, buf in state.buf_iterator() do
 		buf_name = vim.api.nvim_buf_get_name(buf)
+		stat = vim.uv.fs_stat(buf_name)
 
 		if buf_name == '' then
 			dir_name = ''
 			file_name = '[No Name]'
+		elseif not stat then
+			dir_name = ''
+			file_name = buf_name
 		else
 			dir_name = vim.fs.dirname(buf_name)
 			dir_name = get_rel_dirname(dir_name)
