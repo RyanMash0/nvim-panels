@@ -54,6 +54,9 @@ local function set_cur_line(line)
 	vim.api.nvim_win_set_cursor(win_id, { line, 0 })
 end
 
+local function add_entry()
+end
+
 ---
 ---@param start_line integer
 ---@return integer
@@ -82,32 +85,34 @@ local function get_entries(start_line)
 	local entry
 	local entry_path
 	for name, type in vim.fs.dir(path) do
-		entries = entries + 1
-		entry_path = vim.fs.joinpath(path, name)
-		entry = {
-			depth = depth,
-			path = entry_path,
-			type = type,
-		}
+		if not utils.check_hide(name) then
+			entries = entries + 1
+			entry_path = vim.fs.joinpath(path, name)
+			entry = {
+				depth = depth,
+				path = entry_path,
+				type = type,
+			}
 
-		expanded = state.is_expanded(entry_path)
+			expanded = state.is_expanded(entry_path)
 
-		if type == fs_type.DIRECTORY then
-			line = start_line + dirs + extra
-			dirs = dirs + 1
-			if expanded then dir_type = indicator.dir_open
-			else dir_type = indicator.dir_closed end
-			name = dir_type .. name .. '/'
-		else
-			line = start_line + dirs + other + extra
-			other = other + 1
-			name = indicator.other .. name
-		end
+			if type == fs_type.DIRECTORY then
+				line = start_line + dirs + extra
+				dirs = dirs + 1
+				if expanded then dir_type = indicator.dir_open
+				else dir_type = indicator.dir_closed end
+				name = dir_type .. name .. '/'
+			else
+				line = start_line + dirs + other + extra
+				other = other + 1
+				name = indicator.other .. name
+			end
 
-		state.insert_tree_entry(entry, prefix..name, line + 1)
+			state.insert_tree_entry(entry, prefix..name, line + 1)
 
-		if expanded then
-			extra = extra + get_entries(line + 1)
+			if expanded then
+				extra = extra + get_entries(line + 1)
+			end
 		end
 	end
 

@@ -7,6 +7,19 @@ local constants = require('nvim-panels.filetree.constants')
 local state = require('nvim-panels.filetree.state')
 
 ---
+---@param path string
+---@return boolean
+function M.check_hide(path)
+	local pattern
+	for _, glob in ipairs(config.options.hide) do
+		pattern = vim.glob.to_lpeg(glob)
+		if pattern:match(path) then return true end
+	end
+
+	return false
+end
+
+---
 ---@param dir string
 function M.change_dir(dir)
 	for _, win in ipairs(vim.api.nvim_list_wins()) do

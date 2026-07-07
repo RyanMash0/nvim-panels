@@ -10,7 +10,6 @@
 ? Render debounce
 ? Investigate semi-global table
 ? Add sorting support for file tree
-- Hide list for file tree
 - Add support for links in file tree
 - Add state saving on exit (SessionWritePre, SessionLoadPost)
 - Add documentation to functions

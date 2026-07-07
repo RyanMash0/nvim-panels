@@ -52,7 +52,7 @@
 ---@field do_cursorline boolean
 ---@field show_keymaps boolean
 ---@field change_dir boolean
----@field hide table<string, true>
+---@field hide string[]
 ---@field header fun(): string[]?
 ---@field keymaps_info string[]
 ---@field keymaps nvim-panels.filetree.keymaps
