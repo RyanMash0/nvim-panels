@@ -20,7 +20,11 @@ M.defaults = {
 M.options = vim.deepcopy(M.defaults)
 
 function M.setup(opts)
+	local g_utils = require('nvim-panels.utils')
+
 	M.options = vim.tbl_deep_extend('force', M.defaults, opts or {})
+
+	g_utils.get_term_bg(M.add_highlights)
 end
 
 function M.add_highlights(bg)

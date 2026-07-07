@@ -134,6 +134,15 @@ vim.api.nvim_create_autocmd('BufDelete', {
 	end,
 })
 
+vim.api.nvim_create_autocmd('DirChanged', {
+	group = 'PanelsBufferBar',
+	callback = function()
+		if not g_state.active then return end
+		local ui = require('nvim-panels.bufferbar.ui')
+		vim.schedule(ui.render)
+	end,
+})
+
 vim.api.nvim_create_autocmd('ColorScheme', {
 	group = 'PanelsBufferBar',
 	callback = function()

@@ -15,6 +15,8 @@ M.defaults = {
 	},
 	do_cursorline = true,
 	show_keymaps = true,
+	change_dir = true,
+	hide = {},
 	header = function() return nil end,
 	keymaps_info = {
 		' ┌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌┐',
@@ -56,6 +58,7 @@ M.defaults = {
 		close_target = 'ct',
 		close_all = 'ca',
 		toggle_keymaps = 't',
+		change_dir = 'cd',
 		ascend = '-',
 		action = '<CR>',
 		action_alt= '<C-M>',
@@ -67,7 +70,11 @@ M.defaults = {
 M.options = vim.deepcopy(M.defaults)
 
 function M.setup(opts)
+	local g_utils = require('nvim-panels.utils')
+
 	M.options = vim.tbl_deep_extend('force', M.defaults, opts or {})
+
+	g_utils.get_term_bg(M.add_highlights)
 end
 
 function M.add_highlights()

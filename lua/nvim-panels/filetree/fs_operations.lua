@@ -35,7 +35,7 @@ local function print_successes(path_log, operation, change_entry, delete)
 	local old_path
 	local path
 	local success
-	local cwd = vim.uv.cwd() or vim.fn.getcwd()
+	local cwd = state.get_cwd()
 	for _, item in ipairs(path_log) do
 		old_path = vim.fs.relpath(cwd, item[1]) or item[1]
 		path = vim.fs.relpath(cwd, item[2]) or item[2]
@@ -95,7 +95,7 @@ end
 ---@return nvim-panels.filetree.enum.trash_confirm
 local function get_delete_prompt(path)
 	local co = coroutine.running()
-	local cwd = vim.uv.cwd() or vim.fn.getcwd()
+	local cwd = state.get_cwd()
 	local relpath = vim.fs.relpath(cwd, path)
 	local confirm = constants.confirm
 	local prompt_prefix = 'Confirm (RECURSIVE) deletion of <'

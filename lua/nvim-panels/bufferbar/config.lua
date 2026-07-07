@@ -50,7 +50,9 @@ M.defaults = {
 M.options = vim.deepcopy(M.defaults)
 
 function M.setup(opts)
+	local g_utils = require('nvim-panels.utils')
 	local utils = require('nvim-panels.bufferbar.utils')
+
 	M.options = vim.tbl_deep_extend('force', M.defaults, opts or {})
 
 	M.options.styling.padding.normal.before_str = string.rep(
@@ -73,6 +75,8 @@ function M.setup(opts)
 		min_pad_pre = utils.string_to_reg(M.options.styling.padding.minimal.before_str),
 		separator = utils.string_to_reg(M.options.styling.separator),
 	}
+
+	g_utils.get_term_bg(M.add_highlights)
 end
 
 function M.add_highlights(bg)

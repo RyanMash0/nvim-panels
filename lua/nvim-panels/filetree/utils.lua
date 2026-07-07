@@ -7,6 +7,16 @@ local constants = require('nvim-panels.filetree.constants')
 local state = require('nvim-panels.filetree.state')
 
 ---
+---@param dir string
+function M.change_dir(dir)
+	for _, win in ipairs(vim.api.nvim_list_wins()) do
+		vim.api.nvim_win_call(win, function()
+			vim.cmd.lcd({ args = { dir }, mods = { silent = true }})
+		end)
+	end
+end
+
+---
 function M.go_to_dir()
 	local ui = require('nvim-panels.filetree.ui')
 	local fs_type = g_constants.fs_type
@@ -94,7 +104,7 @@ end
 ---@return string[]
 function M.get_target_array()
 	local target = state.get_target()
-	local cwd = vim.uv.cwd() or vim.fn.getcwd()
+	local cwd = state.get_cwd()
 
 	target = vim.fs.relpath(cwd, target) .. '/'
 
@@ -104,7 +114,7 @@ end
 ---
 ---@return string[]
 function M.get_cwd_array()
-	local path = vim.uv.cwd() or vim.fn.getcwd()
+	local path = state.get_cwd()
 	local home_dir = vim.uv.os_homedir()
 	if home_dir then
 		path = path:gsub(home_dir, '~')

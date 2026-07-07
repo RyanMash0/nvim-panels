@@ -7,6 +7,7 @@ local window = g_constants.NOID
 local on_click = nil
 
 local header_height = 0
+local cwd = vim.uv.cwd() or vim.fn.cwd()
 local line_to_entry = {}
 local line_to_text = {}
 local fs_expanded = {}
@@ -50,15 +51,27 @@ function M.set_on_click(fun)
 end
 
 ---
+---@return integer
+function M.get_header_height()
+	return header_height
+end
+
+---
 ---@param height integer
 function M.set_header_height(height)
 	header_height = height
 end
 
 ---
----@return integer
-function M.get_header_height()
-	return header_height
+---@return string
+function M.get_cwd()
+	return cwd
+end
+
+---
+---@param dir string
+function M.set_cwd(dir)
+	cwd = dir
 end
 
 ---
@@ -175,7 +188,7 @@ end
 ---@return string
 function M.get_target()
 	local target, _ = next(fs_target)
-	return target or vim.uv.cwd() or vim.fn.getcwd()
+	return target or M.get_cwd()
 end
 
 ---

@@ -4,6 +4,7 @@ local g_constants = require('nvim-panels.constants')
 local g_state = require('nvim-panels.state')
 local g_utils = require('nvim-panels.utils')
 
+local config = require('nvim-panels.filetree.config')
 local constants = require('nvim-panels.filetree.constants')
 local state = require('nvim-panels.filetree.state')
 local utils = require('nvim-panels.filetree.utils')
@@ -188,31 +189,24 @@ local function close(line)
 end
 
 ---
----@param path string
-function M.change_dir(path)
+---@param dir string
+function M.change_dir(dir)
 	g_utils.check_or_make_main_win()
 	vim.schedule(function()
-		for _, win in ipairs(vim.api.nvim_list_wins()) do
-			vim.api.nvim_win_call(win, function()
-				vim.cmd.lcd({ args = { path }, mods = { silent = true }})
-			end)
-		end
+		if config.options.change_dir then utils.change_dir(dir) end
+		state.set_cwd(dir)
+		state.clear_marked()
 		set_cur_line(1)
 		M.render()
 		vim.api.nvim_set_current_win(state.get_window())
-		require('nvim-panels.bufferbar').get_ui().render()
 	end)
 end
 
 ---
 function M.ascend()
-	vim.schedule(function()
-		local cwd = vim.uv.cwd() or vim.fn.getcwd()
-		local new_path = vim.fs.dirname(cwd)
-
-		state.clear_marked()
-		M.change_dir(new_path)
-	end)
+	local cwd = state.get_cwd()
+	local new_path = vim.fs.dirname(cwd)
+	M.change_dir(new_path)
 end
 
 ---
@@ -220,7 +214,6 @@ function M.descend()
 	local fs_type = g_constants.fs_type
 	local path, type = utils.get_current_entry()
 	if type ~= fs_type.DIRECTORY then return end
-	state.clear_marked()
 	M.change_dir(path)
 end
 
@@ -318,7 +311,7 @@ end
 ---
 function M.render()
 	local fs_type = g_constants.fs_type
-	local path = vim.uv.cwd() or vim.fn.getcwd()
+	local path = state.get_cwd()
 	local header_entry = {
 		depth = constants.BASE_DEPTH,
 		path = constants.NO_PATH,

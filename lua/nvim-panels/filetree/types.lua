@@ -39,6 +39,7 @@
 ---@field close_target string
 ---@field close_all string
 ---@field toggle_keymaps string
+---@field change_dir string
 ---@field ascend string
 ---@field action string
 ---@field action_alt string
@@ -50,6 +51,8 @@
 ---@field buffer nvim-panels.buf_opts
 ---@field do_cursorline boolean
 ---@field show_keymaps boolean
+---@field change_dir boolean
+---@field hide table<string, true>
 ---@field header fun(): string[]?
 ---@field keymaps_info string[]
 ---@field keymaps nvim-panels.filetree.keymaps
